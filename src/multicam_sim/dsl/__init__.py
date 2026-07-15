@@ -9,6 +9,7 @@ optional extra and importing it must never be required to build a scene.
 
 from __future__ import annotations
 
+from .builder import SceneBuilder
 from .motion import (
     BezierPath,
     CirclePath,
@@ -19,14 +20,19 @@ from .motion import (
     SequencePath,
     WaypointPath,
 )
+from .occlusion import Occlusion
+from .rig import CameraRig
 
 __all__ = [
     "BezierPath",
+    "CameraRig",
     "CirclePath",
     "LinearPath",
+    "Occlusion",
     "Path",
     "PathUnion",
     "RepeatPath",
+    "SceneBuilder",
     "SequencePath",
     "WaypointPath",
 ]
