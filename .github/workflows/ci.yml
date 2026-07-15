@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: bamdadd/multicam-occlusion
-          ref: 59f4906
+          ref: 59f49067dbc03a778de8bc5aa0001c53f6de308d  # multicam-occlusion@59f4906
           path: multicam-occlusion
 
       - name: Install uv
