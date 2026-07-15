@@ -116,3 +116,95 @@ triangulates a cam-1-occluded frame **from the other two views only** (masking o
 `visible`) through the **real** `multicam_occlusion.triangulate_dlt` — recovering
 ground truth to within `1e-6`. This proves occluded-in-one-view recovery through
 the actual consumer reader.
+
+## DSL grammar (`multicam_sim.dsl`)
+
+A fluent, typed sugar layer that **compiles down to the Scene/manifest above** —
+it adds no fields and changes no convention. Everything below is pydantic-typed,
+validated at construction, and CPU-only; the renderer is the sole optional part.
+
+### Camera rig — `CameraRig -> list[Camera]`
+
+Every camera is built through `Camera.look_at` (or, for `custom`, stored
+verbatim), so the RDF / Z-up / `t = -R@C` convention is never re-derived.
+
+```
+CameraRig.ring(n, radius, height, look_at, *, width, height_px, focal | fov_deg)
+CameraRig.line(n, start, end, look_at, *, width, height_px, focal | fov_deg)
+CameraRig.custom(extrinsics=[(R, t), ...], *, width, height_px, focal | fov_deg)
+```
+
+Intrinsics take **exactly one** of `focal` (pixels) or `fov_deg` (horizontal
+FOV); `focal = (width/2) / tan(fov/2)`. `ring` uses the smoke ring convention:
+eye `i = (radius·cos t, radius·sin t, height)`, `t = 2π·i/n`.
+
+### Movement — `Path` (a time → 3D-point function)
+
+A `Path` is a discriminated union on `kind` (parallels `OccluderUnion`).
+Geometry is `u ∈ [0,1]` (`point(u)`); timing is a separate seconds axis.
+
+```
+Path.linear(a, b)                       Path.waypoints([p0, p1, ...])   (≥2)
+Path.circle(center, radius, axis)       Path.bezier([c0, c1, ...])      (≥2)
+
+combinators:  a.then(b)   p.repeat(n)   p.over(seconds)   p.at_speed(v)
+compile:      path.compile_frames(fps, num_frames, name="center") -> [EntityFrame]
+```
+
+`then`/`repeat` sum wall-clock durations; `over` rescales the whole trajectory;
+`at_speed` sets duration from arc length. An **untimed** path is stretched to fill
+the scene duration `(num_frames-1)/fps`; a **timed** one keeps its duration and
+**holds at its final point** past the end. Output is exactly the per-frame named
+points the manifest already expects.
+
+### Occlusion — declarative schedule → real geometry
+
+```
+Occlusion.sphere(size) | .box(size) | .plane(size)
+         .blocks(camera=i).during((frame0, frame1))
+         [.on(entity, point_name)]  [.targeting(coverage)]
+```
+
+The schedule compiles to a **real** occluder placed on camera `i`'s sightline to
+the target point at the window's middle frame; `build_manifest` then computes
+`visible` **geometrically**. Two deliberate consequences:
+
+- **The window is emergent.** `.during((3,7))` places geometry aimed at that
+  window; the achieved `visible=False` interval is whatever the solid produces.
+  Tests assert the *actual* manifest pattern, never assume equality with the
+  request. (A static global occluder cannot be exactly per-frame time-gated —
+  that would need a per-frame-occluder schema change, out of scope for the
+  contract. Escalate if a concrete case can't be realized.)
+- **`visible` is never faked.** The hard boolean stays geometric truth. `coverage`
+  is a **monotonic difficulty knob** that scales occluder size, moving the
+  continuous `occ_frac` readback (quantised to eighths by the manifest sampler);
+  it never touches the triangulation mask. This is the dialable dose that couples
+  to multicam-occlusion's occlusion dose-response.
+
+`plane` is a thin flat box (finite-plane approximation), so no new occluder type
+enters the contract's `OccluderUnion`.
+
+### Assembly — `SceneBuilder -> Scene`
+
+```
+Scene = (
+    SceneBuilder(fps, num_frames)
+    .cameras(CameraRig.ring(...))
+    .entity("obj", Path.linear(a, b))
+    .occlude(Occlusion.sphere(0.15).blocks(camera=1).during((3, 7)))
+    .build()
+)
+```
+
+The result is the ordinary `Scene`; `build_manifest(scene)` is unchanged. A DSL
+scene that reproduces the smoke setup recovers ground truth for a cam-1-occluded
+frame through the real `triangulate_dlt`, exactly like the hand-built smoke.
+
+## Renderer backend (`multicam_sim.dsl.render`) — not the contract
+
+`RendererBackend` is a `Protocol` (Scene + camera + frame → `(H,W,3)` pixels).
+`PyrenderBackend` is an offscreen v1; `pyrender`/`trimesh` are an optional
+`render` extra imported lazily, never at package load and never in CI — pixels
+cannot break the manifest's green bar. **Kubric/Blender** is a future
+open/closed swap of this Protocol; a **Rust core via `pyo3`** for the analytic
+projection/occlusion path is a v2 concern.
