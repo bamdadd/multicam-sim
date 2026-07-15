@@ -9,6 +9,11 @@ authors = [{ name = "Bamdad Dashtban" }]
 keywords = ["multi-view-geometry", "pinhole", "occlusion", "simulation", "computer-vision"]
 dependencies = ["pydantic>=2.7", "numpy>=1.26"]
 
+[project.optional-dependencies]
+# Offscreen renderer backend (multicam_sim.dsl.render). Pixels are NOT the
+# contract, so this is optional and intentionally kept out of CI.
+render = ["pyrender>=0.1.45", "trimesh>=4.0"]
+
 [project.urls]
 Homepage = "https://github.com/bamdadd/multicam-sim"
 Repository = "https://github.com/bamdadd/multicam-sim"
@@ -47,6 +52,12 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 python_version = "3.12"
 strict = true
 files = ["src"]
+
+# The optional renderer backend (render extra) ships no stubs and is never
+# installed in CI; treat its imports as missing so mypy stays clean without it.
+[[tool.mypy.overrides]]
+module = ["pyrender.*", "trimesh.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = "-q"
