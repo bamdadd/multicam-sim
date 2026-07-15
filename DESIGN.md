@@ -116,3 +116,35 @@ triangulates a cam-1-occluded frame **from the other two views only** (masking o
 `visible`) through the **real** `multicam_occlusion.triangulate_dlt` — recovering
 ground truth to within `1e-6`. This proves occluded-in-one-view recovery through
 the actual consumer reader.
+
+## Pose manifest extension
+
+Human pose reuses the named-points design with **zero schema fork**. It is not a
+new manifest; it is a typed way to build the entities the existing builder
+already understands.
+
+- A **human** = **1 entity** with **17 named joints** (COCO-17) plus an `edges`
+  skeleton (19 limbs). The joints are ordinary named points, so
+  `build_manifest` labels each joint exactly like any other point.
+- `PoseTrajectory.to_entity()` (`src/multicam_sim/pose.py`) lowers a skeleton +
+  per-frame joints to a plain `Entity`. Nothing in the manifest schema above
+  changes.
+
+So for every joint the manifest already carries:
+
+- **GT 3D** — `xyz_gt`, the joint's world position;
+- **2D keypoint per camera** — `per_cam[i].uv`;
+- **per-joint occlusion** — `per_cam[i].visible` and `per_cam[i].occ_frac`. A
+  joint blocked in one view but seen in others is `visible: false` for the
+  blocked camera and `true` for the rest, per the same hard-DLT contract used for
+  object points.
+
+This per-joint, per-view visibility is exactly the input a **multi-view 3D human
+pose estimator** in multicam-occlusion consumes: triangulate each joint from the
+cameras that still see it, and use the occluded views as held-out difficulty.
+
+**Default skeleton:** COCO-17 (17 keypoints, the canonical 19-edge skeleton),
+`Skeleton.coco17()`. **Dense body models** (SMPL / SMPL-X) are an open/closed
+extension point: implement the `MeshBackend` ABC to emit a `PoseTrajectory`, and
+the projection/occlusion/manifest path is unchanged. No mesh backend is
+implemented in this layer.
