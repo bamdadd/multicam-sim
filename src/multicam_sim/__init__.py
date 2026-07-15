@@ -10,17 +10,31 @@ from .cameras import Camera, Intrinsics
 from .entities import Entity, EntityFrame
 from .manifest import build_manifest, write_manifest
 from .occluders import Box, Occluder, Sphere
+from .pose import (
+    COCO17_EDGES,
+    COCO17_JOINTS,
+    MeshBackend,
+    PoseFrame,
+    PoseTrajectory,
+    Skeleton,
+)
 from .scene import Scene
 from .smoke import build_smoke_scene
 
 __all__ = [
+    "COCO17_EDGES",
+    "COCO17_JOINTS",
     "Box",
     "Camera",
     "Entity",
     "EntityFrame",
     "Intrinsics",
+    "MeshBackend",
     "Occluder",
+    "PoseFrame",
+    "PoseTrajectory",
     "Scene",
+    "Skeleton",
     "Sphere",
     "build_manifest",
     "build_smoke_scene",
