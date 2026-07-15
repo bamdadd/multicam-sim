@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # this repo
+      - uses: actions/checkout@v4
+        with:
+          path: multicam-sim
+
+      # the consumer reader — the smoke triangulates through its real DLT.
+      # pinned to the commit whose convention this repo mirrors.
+      - uses: actions/checkout@v4
+        with:
+          repository: bamdadd/multicam-occlusion
+          ref: 59f4906
+          path: multicam-occlusion
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+        working-directory: multicam-sim
+
+      - name: Sync dependencies
+        run: uv sync --dev
+        working-directory: multicam-sim
+
+      - name: Ruff lint
+        run: uv run ruff check .
+        working-directory: multicam-sim
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+        working-directory: multicam-sim
+
+      - name: Mypy
+        run: uv run mypy src
+        working-directory: multicam-sim
+
+      - name: Pytest
+        run: uv run pytest -q
+        working-directory: multicam-sim
