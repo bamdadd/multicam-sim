@@ -1,0 +1,53 @@
+[project]
+name = "multicam-sim"
+version = "0.1.0"
+description = "A typed multi-camera scene simulator: pinhole projection + occlusion, emitting a triangulation-ready manifest."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Bamdad Dashtban" }]
+keywords = ["multi-view-geometry", "pinhole", "occlusion", "simulation", "computer-vision"]
+dependencies = ["pydantic>=2.7", "numpy>=1.26"]
+
+[project.urls]
+Homepage = "https://github.com/bamdadd/multicam-sim"
+Repository = "https://github.com/bamdadd/multicam-sim"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/multicam_sim"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pre-commit>=3.8",
+    # the real consumer reader — the smoke triangulates through its DLT.
+    "multicam-occlusion",
+]
+
+[tool.uv.sources]
+# path dep to the sibling checkout; CI checks the repo out at ../multicam-occlusion.
+multicam-occlusion = { path = "../multicam-occlusion", editable = true }
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+# 3.12 so mypy parses NumPy's PEP 695 `type` aliases in its bundled stubs;
+# the package itself runs on 3.11+ (see requires-python).
+python_version = "3.12"
+strict = true
+files = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
