@@ -8,6 +8,8 @@ the derived matrices. Convention mirrored from multicam-occlusion@59f4906
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -24,7 +26,7 @@ from .geometry import (
 
 class Intrinsics(BaseModel):
     """Pinhole intrinsics. ``cx``/``cy`` default to the image centre when built
-    via :meth:`from_focal`."""
+    via :meth:`from_focal` or :meth:`from_fov`."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -41,6 +43,43 @@ class Intrinsics(BaseModel):
         return cls(
             fx=focal,
             fy=focal,
+            cx=width / 2.0,
+            cy=height / 2.0,
+            width=width,
+            height=height,
+        )
+
+    @classmethod
+    def from_fov(
+        cls,
+        fov_x_deg: float,
+        width: int,
+        height: int,
+        fov_y_deg: float | None = None,
+    ) -> Intrinsics:
+        """Intrinsics from horizontal (and optional vertical) field of view.
+
+        When ``fov_y_deg`` is omitted, pixels are assumed square (``fy == fx``).
+        The principal point is placed at the image centre.
+        """
+        if width <= 0:
+            raise ValueError("width must be > 0")
+        if height <= 0:
+            raise ValueError("height must be > 0")
+        if not 0.0 < fov_x_deg < 180.0:
+            raise ValueError("fov_x_deg must be in (0, 180)")
+
+        fx = (width / 2.0) / math.tan(math.radians(fov_x_deg) / 2.0)
+        if fov_y_deg is None:
+            fy = fx
+        else:
+            if not 0.0 < fov_y_deg < 180.0:
+                raise ValueError("fov_y_deg must be in (0, 180)")
+            fy = (height / 2.0) / math.tan(math.radians(fov_y_deg) / 2.0)
+
+        return cls(
+            fx=fx,
+            fy=fy,
             cx=width / 2.0,
             cy=height / 2.0,
             width=width,
