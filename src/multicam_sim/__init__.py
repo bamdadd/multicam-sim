@@ -11,6 +11,7 @@ from .entities import Entity, EntityFrame
 from .manifest import build_manifest, write_manifest
 from .mtmc import build_mtmc_scene
 from .occluders import Box, Occluder, Sphere
+from .overlay import export_overlay
 from .pose import (
     COCO17_EDGES,
     COCO17_JOINTS,
@@ -46,6 +47,7 @@ __all__ = [
     "build_mtmc_scene",
     "build_pose_smoke_scene",
     "build_smoke_scene",
+    "export_overlay",
     "validate_manifest",
     "write_manifest",
 ]
