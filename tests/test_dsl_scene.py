@@ -172,3 +172,57 @@ def test_occlusion_coverage_is_monotonic_on_occ_frac() -> None:
     fracs = [mid_occ_frac(c) for c in (0.5, 1.0, 2.0)]
     assert fracs == sorted(fracs)  # monotonic non-decreasing
     assert fracs[-1] > 0.0
+
+
+def _scene_with_occlusion(occ: Occlusion, *, num_frames: int = 50) -> dict:
+    scene = (
+        SceneBuilder(fps=30.0, num_frames=num_frames)
+        .cameras(
+            CameraRig.ring(
+                n=3,
+                radius=4.0,
+                height=1.5,
+                look_at=(0.0, 0.0, 0.5),
+                focal=800.0,
+                width=640,
+                height_px=480,
+            )
+        )
+        .entity("obj", Path.linear((0.0, -0.6, 0.5), (0.0, 0.6, 0.5)))
+        .occlude(occ)
+        .build()
+    )
+    return build_manifest(scene)
+
+
+def test_during_seconds_matches_during_frames() -> None:
+    """seconds window (0.5, 1.5) @ 30fps rounds to frames (15, 45) and produces
+    the identical per-frame visible pattern for the occluded point."""
+    by_frames = _scene_with_occlusion(
+        Occlusion.sphere(size=0.15).blocks(camera=1).during((15, 45))
+    )
+    by_seconds = _scene_with_occlusion(
+        Occlusion.sphere(size=0.15).blocks(camera=1).during_seconds(0.5, 1.5)
+    )
+    vis_frames = [
+        fr["points"]["center"]["per_cam"][1]["visible"]
+        for fr in by_frames["entities"][0]["frames"]
+    ]
+    vis_seconds = [
+        fr["points"]["center"]["per_cam"][1]["visible"]
+        for fr in by_seconds["entities"][0]["frames"]
+    ]
+    assert vis_frames == vis_seconds
+
+
+def test_during_seconds_rejects_inverted_window() -> None:
+    with pytest.raises(ValueError):
+        Occlusion.sphere(size=0.15).during_seconds(1.5, 0.5)
+
+
+def test_occlusion_rejects_both_frames_and_seconds_windows() -> None:
+    """An occlusion must declare exactly one schedule: frames or seconds."""
+    with pytest.raises(ValueError):
+        Occlusion.sphere(size=0.15).during((3, 7)).during_seconds(0.5, 1.5)
+    with pytest.raises(ValueError):
+        Occlusion.sphere(size=0.15).during_seconds(0.5, 1.5).during((3, 7))

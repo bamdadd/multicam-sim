@@ -78,6 +78,13 @@ class SceneBuilder:
 
         occluders: list[OccluderUnion] = []
         for occ in self._occlusions:
+            if occ.frames is not None and occ.seconds is not None:
+                raise ValueError("occlusion has both frames and seconds windows; use one schedule")
+            if occ.seconds is not None:
+                t0, t1 = occ.seconds
+                f0 = int(round(t0 * self.fps))
+                f1 = int(round(t1 * self.fps))
+                occ = occ.model_copy(update={"frames": (f0, f1), "seconds": None})
             target_id = occ.entity if occ.entity is not None else self._entities[0].id
             if target_id not in frames_by_id:
                 raise ValueError(f"occlusion targets unknown entity {target_id!r}")

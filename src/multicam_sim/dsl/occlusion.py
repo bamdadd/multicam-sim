@@ -49,6 +49,7 @@ class Occlusion(BaseModel):
     offset: float = 0.15  # fraction from the point toward the camera centre
     camera: int | None = None
     frames: tuple[int, int] | None = None
+    seconds: tuple[float, float] | None = None
     entity: str | None = None  # default: the scene's first entity
     point_name: str = "center"
 
@@ -81,10 +82,24 @@ class Occlusion(BaseModel):
 
     def during(self, frames: tuple[int, int]) -> Occlusion:
         """Aim the occlusion at the frame window ``(frame0, frame1)`` inclusive."""
+        if self.seconds is not None:
+            raise ValueError("occlusion already has a seconds window; use .during_seconds(...)")
         f0, f1 = frames
         if f0 > f1:
             raise ValueError("during(frames): frame0 must be <= frame1")
         return self.model_copy(update={"frames": frames})
+
+    def during_seconds(self, t0: float, t1: float) -> Occlusion:
+        """Aim the occlusion at the seconds window ``(t0, t1)`` inclusive.
+
+        The window is converted to frames by :meth:`SceneBuilder.build` using the
+        scene ``fps``, rounding to the nearest frame.
+        """
+        if self.frames is not None:
+            raise ValueError("occlusion already has a frames window; use .during(...)")
+        if t0 > t1:
+            raise ValueError("during_seconds(t0, t1): t0 must be <= t1")
+        return self.model_copy(update={"seconds": (t0, t1)})
 
     def on(self, entity: str, point_name: str = "center") -> Occlusion:
         """Target a named entity/point (default: first entity, point ``center``)."""
