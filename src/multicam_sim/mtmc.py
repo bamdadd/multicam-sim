@@ -19,6 +19,8 @@ consumer knows A and B are adjacent and how long the transit takes.
 
 from __future__ import annotations
 
+from typing import Any
+
 from .cameras import Camera
 from .dsl.motion import Path
 from .dsl.rig import CameraRig, StationView
@@ -91,3 +93,67 @@ def build_mtmc_scene() -> Scene:
         occluders=[],
         topology=topology,
     )
+
+
+def entity_camera_intervals(
+    manifest: dict[str, Any], entity_id: str
+) -> dict[int, list[tuple[int, int]]]:
+    """Derive per-camera ``[enter, leave]`` frame intervals for ``entity_id``.
+
+    Intervals are derived from the ``false -> true`` and ``true -> false``
+    transitions of the per-camera ``in_view`` flag recorded in ``manifest``.
+    For an entity with multiple named points, a camera is considered to see the
+    entity in a frame when **any** of its points has ``in_view=True``.
+
+    Returns a mapping ``camera_id -> list[(enter_frame, leave_frame)]`` with one
+    key per camera declared in ``manifest["cameras"]``. Intervals are sorted in
+    ascending frame order.
+
+    Boundary convention:
+
+    * Intervals are **closed**: both ``enter_frame`` and ``leave_frame`` are
+      frames where the entity is in view.
+    * A track visible at frame 0 enters at ``0``.
+    * A track still visible at the final recorded frame leaves at that frame
+      (no open-ended sentinel).
+    * A camera that never sees the entity maps to an empty list.
+    """
+    try:
+        entity = next(e for e in manifest["entities"] if e["id"] == entity_id)
+    except StopIteration as exc:
+        raise ValueError(f"entity {entity_id!r} not found in manifest") from exc
+
+    camera_ids = [cam["id"] for cam in manifest["cameras"]]
+    cam_index = {cam_id: idx for idx, cam_id in enumerate(camera_ids)}
+    result: dict[int, list[tuple[int, int]]] = {cam_id: [] for cam_id in camera_ids}
+
+    frames = sorted(entity["frames"], key=lambda f: f["frame"])
+    if not frames:
+        return result
+
+    sequences: dict[int, list[bool]] = {cam_id: [] for cam_id in camera_ids}
+    frame_numbers: list[int] = []
+    for frame in frames:
+        frame_numbers.append(frame["frame"])
+        per_point_per_cam = [p["per_cam"] for p in frame["points"].values()]
+        for cam_id, idx in cam_index.items():
+            in_view = any(obs[idx]["in_view"] for obs in per_point_per_cam)
+            sequences[cam_id].append(in_view)
+
+    for cam_id, flags in sequences.items():
+        intervals = result[cam_id]
+        enter: int | None = None
+        prev_frame: int | None = None
+        for frame, flag in zip(frame_numbers, flags, strict=True):
+            if flag and enter is None:
+                enter = frame
+            elif not flag and enter is not None:
+                assert prev_frame is not None
+                intervals.append((enter, prev_frame))
+                enter = None
+            prev_frame = frame
+        if enter is not None:
+            assert prev_frame is not None
+            intervals.append((enter, prev_frame))
+
+    return result
