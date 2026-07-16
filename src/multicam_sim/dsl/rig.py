@@ -12,7 +12,7 @@ Intrinsics are given as exactly one of ``focal`` (pixels) or ``fov_deg``
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 from pydantic import BaseModel
@@ -23,6 +23,18 @@ from ..geometry import UP_WORLD
 Vec3 = tuple[float, float, float]
 #: A uniform height (scalar) or one height per camera (sequence of length ``n``).
 Heights = float | Sequence[float]
+
+
+class PoseOverride(BaseModel):
+    """Explicit per-camera pose override: an eye ``position`` looking at ``look_at``.
+
+    Used by the parametric rig presets (:meth:`CameraRig.ring`, :meth:`stereo`,
+    :meth:`arc`, :meth:`line`, :meth:`stations`) to replace the computed pose for
+    one camera while leaving unspecified cameras on the preset path.
+    """
+
+    position: Vec3
+    look_at: Vec3
 
 
 class StationView(BaseModel):
@@ -71,6 +83,38 @@ def _jitter_offsets(n: int, height_jitter: float, seed: int) -> list[float]:
     return [float(x) for x in rng.uniform(-height_jitter, height_jitter, size=n)]
 
 
+#: Per-camera overrides: dense list (length ``n``, ``None`` = keep preset) or sparse
+#: mapping keyed by camera index.
+PoseOverrides = Sequence[PoseOverride | None] | Mapping[int, PoseOverride]
+
+
+def _resolve_overrides(
+    n: int,
+    overrides: PoseOverrides | None,
+) -> list[PoseOverride | None]:
+    """Validate and normalize per-camera pose overrides to a length-``n`` list.
+
+    A :class:`Sequence` must have length ``n`` (``None`` entries keep the preset
+    pose for that camera). A :class:`Mapping` must use integer keys in
+    ``[0, n)``; missing keys keep the preset pose. Any mismatch raises a clear
+    ``ValueError`` matching the module's existing validation style.
+    """
+    if overrides is None:
+        return [None] * n
+    if isinstance(overrides, Mapping):
+        out: list[PoseOverride | None] = [None] * n
+        for key in overrides:
+            if not isinstance(key, int) or not (0 <= key < n):
+                raise ValueError(f"override key {key} out of range for n={n} cameras")
+            out[key] = overrides[key]
+        return out
+    if isinstance(overrides, Sequence) and not isinstance(overrides, (str, bytes)):
+        if len(overrides) != n:
+            raise ValueError(f"overrides sequence has length {len(overrides)}, expected n={n}")
+        return list(overrides)
+    raise ValueError("overrides must be a sequence of length n or a mapping keyed by camera index")
+
+
 def _intrinsics(
     width: int,
     height: int,
@@ -106,6 +150,7 @@ class CameraRig:
         fov_deg: float | None = None,
         height_jitter: float = 0.0,
         seed: int = 0,
+        overrides: PoseOverrides | None = None,
     ) -> list[Camera]:
         """``n`` cameras evenly spaced on a horizontal ring, all facing ``look_at``.
 
@@ -116,6 +161,11 @@ class CameraRig:
         vertical offset on top. Heights only change eye ``z`` — ``R``/``t`` still
         follow the exact convention (``t = -R@C``, RDF, Z-up).
 
+        ``overrides`` replaces the computed pose for individual cameras. Pass a
+        sequence of length ``n`` (``None`` keeps the preset pose for that slot) or
+        a mapping from camera index to :class:`PoseOverride`; unspecified cameras
+        keep the ring pose byte-for-byte.
+
         Varied heights are both realism (real rigs sit at different levels) and
         better conditioning: a perfectly coplanar camera set is a degenerate,
         weaker triangulation geometry, and spreading ``z`` de-degenerates it.
@@ -125,16 +175,23 @@ class CameraRig:
         if radius <= 0.0:
             raise ValueError("ring radius must be > 0")
         intrinsics = _intrinsics(width, height_px, focal, fov_deg)
-        target = np.asarray(look_at, dtype=np.float64)
+        base_target = np.asarray(look_at, dtype=np.float64)
         heights = _base_heights(n, height)
         jitter = _jitter_offsets(n, height_jitter, seed)
+        resolved = _resolve_overrides(n, overrides)
         cams: list[Camera] = []
         for i in range(n):
-            angle = 2.0 * math.pi * i / n
-            eye = np.array(
-                [radius * math.cos(angle), radius * math.sin(angle), heights[i] + jitter[i]],
-                dtype=np.float64,
-            )
+            ov = resolved[i]
+            if ov is not None:
+                eye = np.asarray(ov.position, dtype=np.float64)
+                target = np.asarray(ov.look_at, dtype=np.float64)
+            else:
+                angle = 2.0 * math.pi * i / n
+                eye = np.array(
+                    [radius * math.cos(angle), radius * math.sin(angle), heights[i] + jitter[i]],
+                    dtype=np.float64,
+                )
+                target = base_target
             cams.append(Camera.look_at(i, intrinsics, eye, target))
         return cams
 
@@ -151,6 +208,7 @@ class CameraRig:
         fov_deg: float | None = None,
         height_jitter: float = 0.0,
         seed: int = 0,
+        overrides: PoseOverrides | None = None,
     ) -> list[Camera]:
         """A 2-camera horizontal stereo pair, both facing ``look_at``.
 
@@ -159,16 +217,21 @@ class CameraRig:
         horizontal axis ``forward × up_world`` (perpendicular to the view
         direction). ``height`` sets the absolute eye ``z`` for each camera, and
         ``height_jitter`` adds a seeded, reproducible vertical offset on top.
+
+        ``overrides`` replaces the computed pose for either camera. Pass a sequence
+        of length 2 (``None`` keeps the preset pose) or a mapping from camera index
+        to :class:`PoseOverride`.
         """
         if baseline <= 0.0:
             raise ValueError("stereo baseline must be > 0")
         intrinsics = _intrinsics(width, height_px, focal, fov_deg)
-        target = np.asarray(look_at, dtype=np.float64)
+        base_target = np.asarray(look_at, dtype=np.float64)
         center_arr = np.asarray(center, dtype=np.float64)
         heights = _base_heights(2, height)
         jitter = _jitter_offsets(2, height_jitter, seed)
+        resolved = _resolve_overrides(2, overrides)
 
-        forward = target - center_arr
+        forward = base_target - center_arr
         forward_norm = float(np.linalg.norm(forward))
         if forward_norm < 1e-12:
             raise ValueError("stereo look_at must differ from center")
@@ -181,8 +244,14 @@ class CameraRig:
 
         cams: list[Camera] = []
         for side, sign in enumerate((-1.0, 1.0)):
-            eye = center_arr + sign * (baseline / 2.0) * right
-            eye[2] = heights[side] + jitter[side]
+            ov = resolved[side]
+            if ov is not None:
+                eye = np.asarray(ov.position, dtype=np.float64)
+                target = np.asarray(ov.look_at, dtype=np.float64)
+            else:
+                eye = center_arr + sign * (baseline / 2.0) * right
+                eye[2] = heights[side] + jitter[side]
+                target = base_target
             cams.append(Camera.look_at(side, intrinsics, eye, target))
         return cams
 
@@ -201,6 +270,7 @@ class CameraRig:
         fov_deg: float | None = None,
         height_jitter: float = 0.0,
         seed: int = 0,
+        overrides: PoseOverrides | None = None,
     ) -> list[Camera]:
         """``n`` cameras evenly spaced along a circular arc, all facing ``look_at``.
 
@@ -208,23 +278,33 @@ class CameraRig:
         one at ``end_angle``; ``n=1`` places a single camera at ``start_angle``.
         Angles are radians, matching the convention of :meth:`ring`. ``height``
         and ``height_jitter`` behave exactly as in :meth:`ring`.
+
+        ``overrides`` replaces the computed pose for individual cameras; see
+        :meth:`ring` for the accepted shapes.
         """
         if n < 1:
             raise ValueError("arc needs n >= 1 cameras")
         if radius <= 0.0:
             raise ValueError("arc radius must be > 0")
         intrinsics = _intrinsics(width, height_px, focal, fov_deg)
-        target = np.asarray(look_at, dtype=np.float64)
+        base_target = np.asarray(look_at, dtype=np.float64)
         heights = _base_heights(n, height)
         jitter = _jitter_offsets(n, height_jitter, seed)
+        resolved = _resolve_overrides(n, overrides)
         cams: list[Camera] = []
         span = end_angle - start_angle
         for i in range(n):
-            angle = start_angle if n == 1 else start_angle + span * i / (n - 1)
-            eye = np.array(
-                [radius * math.cos(angle), radius * math.sin(angle), heights[i] + jitter[i]],
-                dtype=np.float64,
-            )
+            ov = resolved[i]
+            if ov is not None:
+                eye = np.asarray(ov.position, dtype=np.float64)
+                target = np.asarray(ov.look_at, dtype=np.float64)
+            else:
+                angle = start_angle if n == 1 else start_angle + span * i / (n - 1)
+                eye = np.array(
+                    [radius * math.cos(angle), radius * math.sin(angle), heights[i] + jitter[i]],
+                    dtype=np.float64,
+                )
+                target = base_target
             cams.append(Camera.look_at(i, intrinsics, eye, target))
         return cams
 
@@ -242,6 +322,7 @@ class CameraRig:
         height: Heights | None = None,
         height_jitter: float = 0.0,
         seed: int = 0,
+        overrides: PoseOverrides | None = None,
     ) -> list[Camera]:
         """``n`` cameras evenly spaced from ``start`` to ``end``, all facing ``look_at``.
 
@@ -251,22 +332,32 @@ class CameraRig:
         reproducible vertical offset on top. Only eye ``z`` changes; ``R``/``t``
         keep the exact convention. Spreading the cameras off a single plane is
         realism and better-conditioned (less coplanar/degenerate) triangulation.
+
+        ``overrides`` replaces the computed pose for individual cameras; see
+        :meth:`ring` for the accepted shapes.
         """
         if n < 1:
             raise ValueError("line needs n >= 1 cameras")
         intrinsics = _intrinsics(width, height_px, focal, fov_deg)
         a = np.asarray(start, dtype=np.float64)
         b = np.asarray(end, dtype=np.float64)
-        target = np.asarray(look_at, dtype=np.float64)
-        override = None if height is None else _base_heights(n, height)
+        base_target = np.asarray(look_at, dtype=np.float64)
+        z_override = None if height is None else _base_heights(n, height)
         jitter = _jitter_offsets(n, height_jitter, seed)
+        resolved = _resolve_overrides(n, overrides)
         cams: list[Camera] = []
         for i in range(n):
-            frac = 0.0 if n == 1 else i / (n - 1)
-            eye = a + frac * (b - a)
-            if override is not None:
-                eye[2] = override[i]
-            eye[2] += jitter[i]
+            ov = resolved[i]
+            if ov is not None:
+                eye = np.asarray(ov.position, dtype=np.float64)
+                target = np.asarray(ov.look_at, dtype=np.float64)
+            else:
+                frac = 0.0 if n == 1 else i / (n - 1)
+                eye = a + frac * (b - a)
+                if z_override is not None:
+                    eye[2] = z_override[i]
+                eye[2] += jitter[i]
+                target = base_target
             cams.append(Camera.look_at(i, intrinsics, eye, target))
         return cams
 
@@ -300,6 +391,7 @@ class CameraRig:
         height_px: int,
         focal: float | None = None,
         fov_deg: float | None = None,
+        overrides: PoseOverrides | None = None,
     ) -> list[Camera]:
         """Cameras at SEPARATED stations, each looking at its OWN target.
 
@@ -312,6 +404,10 @@ class CameraRig:
         the shared defaults; ``focal``/``fov_deg`` are shared defaults used only
         for stations that don't set their own.
 
+        ``overrides`` replaces the computed pose for individual stations while
+        keeping the station's own intrinsics; see :meth:`ring` for the accepted
+        shapes.
+
         Two modes off one preset:
 
         * MTMC: separate stations with disjoint FOVs (an object is in at most one
@@ -323,6 +419,8 @@ class CameraRig:
         """
         if not views:
             raise ValueError("stations needs at least one StationView")
+        n = len(views)
+        resolved = _resolve_overrides(n, overrides)
         cams: list[Camera] = []
         for i, view in enumerate(views):
             has_own = view.focal is not None or view.fov_deg is not None
@@ -331,7 +429,12 @@ class CameraRig:
             eff_w = view.width if view.width is not None else width
             eff_h = view.height_px if view.height_px is not None else height_px
             intrinsics = _intrinsics(eff_w, eff_h, eff_focal, eff_fov)
-            eye = np.asarray(view.position, dtype=np.float64)
-            target = np.asarray(view.look_at, dtype=np.float64)
+            ov = resolved[i]
+            if ov is not None:
+                eye = np.asarray(ov.position, dtype=np.float64)
+                target = np.asarray(ov.look_at, dtype=np.float64)
+            else:
+                eye = np.asarray(view.position, dtype=np.float64)
+                target = np.asarray(view.look_at, dtype=np.float64)
             cams.append(Camera.look_at(i, intrinsics, eye, target))
         return cams

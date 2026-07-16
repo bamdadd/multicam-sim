@@ -21,7 +21,7 @@ from .motion import (
     WaypointPath,
 )
 from .occlusion import Occlusion
-from .rig import CameraRig, StationView
+from .rig import CameraRig, PoseOverride, StationView
 
 __all__ = [
     "BezierPath",
@@ -31,6 +31,7 @@ __all__ = [
     "Occlusion",
     "Path",
     "PathUnion",
+    "PoseOverride",
     "RepeatPath",
     "SceneBuilder",
     "SequencePath",
