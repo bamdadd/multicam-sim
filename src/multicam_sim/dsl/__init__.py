@@ -21,7 +21,7 @@ from .motion import (
     WaypointPath,
 )
 from .occlusion import Occlusion
-from .rig import CameraRig
+from .rig import CameraRig, StationView
 
 __all__ = [
     "BezierPath",
@@ -34,5 +34,6 @@ __all__ = [
     "RepeatPath",
     "SceneBuilder",
     "SequencePath",
+    "StationView",
     "WaypointPath",
 ]

@@ -15,12 +15,31 @@ import math
 from collections.abc import Sequence
 
 import numpy as np
+from pydantic import BaseModel
 
 from ..cameras import Camera, Intrinsics
 
 Vec3 = tuple[float, float, float]
 #: A uniform height (scalar) or one height per camera (sequence of length ``n``).
 Heights = float | Sequence[float]
+
+
+class StationView(BaseModel):
+    """One camera station: an eye ``position`` looking at its OWN ``look_at``.
+
+    Optional per-station ``focal``/``fov_deg`` and ``width``/``height_px`` override
+    the rig-wide defaults, so a single :meth:`CameraRig.stations` preset serves
+    both non-overlapping MTMC (separated stations, disjoint FOVs) and
+    heterogeneous fusion (e.g. one wide camera framing a person, another close +
+    zoomed framing items on a bench). Give at most one of ``focal``/``fov_deg``.
+    """
+
+    position: Vec3
+    look_at: Vec3
+    focal: float | None = None
+    fov_deg: float | None = None
+    width: int | None = None
+    height_px: int | None = None
 
 
 def _base_heights(n: int, height: Heights) -> list[float]:
@@ -181,3 +200,47 @@ class CameraRig:
         return [
             Camera(id=i, intrinsics=intrinsics, R=R, t=t) for i, (R, t) in enumerate(extrinsics)
         ]
+
+    @staticmethod
+    def stations(
+        views: Sequence[StationView],
+        *,
+        width: int,
+        height_px: int,
+        focal: float | None = None,
+        fov_deg: float | None = None,
+    ) -> list[Camera]:
+        """Cameras at SEPARATED stations, each looking at its OWN target.
+
+        Unlike :meth:`ring` (one target, overlapping views) this is the
+        non-overlapping / heterogeneous preset: every :class:`StationView` gives
+        its own eye ``position`` and ``look_at``, and may override the rig-wide
+        intrinsics with its own ``focal``/``fov_deg`` and ``width``/``height_px``.
+        Cameras are built through :meth:`Camera.look_at`, so the RDF / Z-up /
+        ``t = -R@C`` convention is never re-derived. ``width``/``height_px`` are
+        the shared defaults; ``focal``/``fov_deg`` are shared defaults used only
+        for stations that don't set their own.
+
+        Two modes off one preset:
+
+        * MTMC: separate stations with disjoint FOVs (an object is in at most one
+          view at a time; the gap between them is a genuine blind interval).
+        * fusion: co-located-ish stations with different targets/zoom, so different
+          entities fall in different cameras' ``in_view`` — the manifest's
+          per-entity per-camera ``in_view`` captures "human in A not B, items in B
+          not A" with no schema change.
+        """
+        if not views:
+            raise ValueError("stations needs at least one StationView")
+        cams: list[Camera] = []
+        for i, view in enumerate(views):
+            has_own = view.focal is not None or view.fov_deg is not None
+            eff_focal = view.focal if has_own else focal
+            eff_fov = view.fov_deg if has_own else fov_deg
+            eff_w = view.width if view.width is not None else width
+            eff_h = view.height_px if view.height_px is not None else height_px
+            intrinsics = _intrinsics(eff_w, eff_h, eff_focal, eff_fov)
+            eye = np.asarray(view.position, dtype=np.float64)
+            target = np.asarray(view.look_at, dtype=np.float64)
+            cams.append(Camera.look_at(i, intrinsics, eye, target))
+        return cams
