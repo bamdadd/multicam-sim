@@ -42,6 +42,30 @@ def test_example_emits_valid_sidecars(example: ModuleType, tmp_path: Path) -> No
     order = json.loads(order_path.read_text())
     assert order["order_id"] == "ORD-1"
     assert summary["result"].status.value == "fulfilled"
+    # order.json carries the synced action events (byte-additive to the sidecar)
+    assert [a["action"] for a in order["actions"]] == ["place", "place", "place"]
+    assert [a["frame"] for a in order["actions"]] == [2, 5, 8]
+
+
+def test_action_events_synced_to_placements_and_operator_wrist(
+    example: ModuleType, tmp_path: Path
+) -> None:
+    """One place-event per placement; frame == placed_at and hand_position == the
+    operator's right_wrist at that frame."""
+    summary = example.run(tmp_path)
+    actions = summary["actions"]
+    _, placements = example.build_order()
+    assert len(actions) == len(placements)
+
+    wrist_by_frame = {f.frame: f.joints["right_wrist"] for f in example.operator_pose().frames}
+    by_item = {a.item_id: a for a in actions}
+    for p in placements:
+        ev = by_item[p.item]
+        assert ev.action == "place"
+        assert ev.frame == p.placed_at_frame
+        assert ev.hand_joint == "right_wrist"
+        assert ev.entity_id == "operator"
+        assert list(ev.hand_position) == pytest.approx(wrist_by_frame[p.placed_at_frame])
 
 
 def test_complementary_in_view(example: ModuleType, tmp_path: Path) -> None:
