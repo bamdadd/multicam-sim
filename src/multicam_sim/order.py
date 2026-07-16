@@ -19,6 +19,15 @@ Discrepancy vocabulary (kept precise so the four statuses are unambiguous):
 
 The overall :class:`OrderStatus` is the most severe deviation present, in the
 order ``wrong_item > missing_item > extra_item > fulfilled``.
+
+**Action events (causal-fusion GT).** Beyond *what* was placed, a downstream
+consumer (multicam-occlusion's causal fusion metric) scores the *timing*
+association between an operator's action and the resulting assembly change. It
+already gets per-item visibility from the manifest, but not the synced operator
+action. :class:`ActionEvent` supplies exactly that: one ``place`` event per item
+placement, time-synced to that item's ``placed_at`` frame and carrying the
+operator's hand-joint world position at that frame. Events ride in the order GT
+sidecar (:class:`OrderResult.actions`), so the byte-golden manifest is untouched.
 """
 
 from __future__ import annotations
@@ -28,7 +37,7 @@ from collections import Counter
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -97,6 +106,26 @@ class ItemPlacement(BaseModel):
     entity_id: str
 
 
+class ActionEvent(BaseModel):
+    """An operator action synced to an assembly change (causal-fusion GT).
+
+    One ``place`` event per item placement, time-synced to that item's
+    ``placed_at`` frame, carrying the operator's hand-joint world position at that
+    frame. ``action`` is a ``Literal["place"]`` today with room to widen (e.g.
+    ``pick`` / ``remove``) without a schema fork. Lives in the order GT sidecar,
+    never in the byte-golden manifest.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    frame: int
+    action: Literal["place"] = "place"
+    item_id: str
+    entity_id: str
+    hand_joint: str = "right_wrist"
+    hand_position: tuple[float, float, float]
+
+
 class OrderStatus(StrEnum):
     """Outcome of verifying an assembly against an order."""
 
@@ -111,6 +140,8 @@ class OrderResult(BaseModel):
 
     ``missing``/``extra``/``wrong`` are ``{name: count}`` deltas (all sorted by
     name), so a consumer sees exactly which items are short, surplus, or foreign.
+    ``actions`` (optional) are the placement-synced operator :class:`ActionEvent`s
+    for causal fusion — additive to the order sidecar, sorted by ``(frame, item_id)``.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -121,6 +152,8 @@ class OrderResult(BaseModel):
     missing: dict[str, int]
     extra: dict[str, int]
     wrong: dict[str, int]
+    order_id: str | None = None
+    actions: list[ActionEvent] = []
 
     def to_json(self, *, indent: int | None = 2) -> str:
         """Serialise to a JSON string (the ``order.json`` sidecar payload)."""
@@ -131,11 +164,19 @@ def _sorted(counts: dict[str, int]) -> dict[str, int]:
     return {k: counts[k] for k in sorted(counts)}
 
 
-def verify_order(bom: BillOfMaterials, placements: Sequence[ItemPlacement]) -> OrderResult:
+def verify_order(
+    bom: BillOfMaterials,
+    placements: Sequence[ItemPlacement],
+    *,
+    order_id: str | None = None,
+    actions: Sequence[ActionEvent] = (),
+) -> OrderResult:
     """Compare placed items against the order; return a deterministic result.
 
     Independent of frame order and placement order — only aggregate per-item
-    counts matter.
+    counts matter. Optional ``order_id`` and ``actions`` (placement-synced
+    operator events) ride in the result; ``actions`` are sorted by
+    ``(frame, item_id)`` so the sidecar is deterministic.
     """
     expected = bom.counts()
     placed = dict(Counter(p.item for p in placements))
@@ -166,6 +207,8 @@ def verify_order(bom: BillOfMaterials, placements: Sequence[ItemPlacement]) -> O
         missing=_sorted(missing),
         extra=_sorted(extra),
         wrong=_sorted(wrong),
+        order_id=order_id,
+        actions=sorted(actions, key=lambda a: (a.frame, a.item_id)),
     )
 
 
