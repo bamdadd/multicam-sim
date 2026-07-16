@@ -16,7 +16,8 @@ from multicam_occlusion.triangulation import triangulate_dlt
 
 from multicam_sim import build_manifest
 from multicam_sim.cameras import Camera, Intrinsics
-from multicam_sim.dsl import CameraRig, Occlusion, Path, SceneBuilder
+from multicam_sim.dsl import CameraRig, Occlusion, Path, PoseOverride, SceneBuilder, StationView
+from multicam_sim.geometry import project_point
 from multicam_sim.manifest import Manifest
 
 
@@ -213,6 +214,117 @@ def test_arc_over_adapted_span_matches_ring() -> None:
         assert np.allclose(r.centre(), a.centre())
         assert np.allclose(r.rotation(), a.rotation())
         assert r.t == a.t
+
+
+def test_ring_pose_overrides_round_trip_pixel_and_centre() -> None:
+    """Three cameras with explicit distinct poses project and round-trip."""
+    overrides = [
+        PoseOverride(position=(4.0, 0.0, 1.0), look_at=(0.0, 0.0, 0.5)),
+        PoseOverride(position=(0.0, 4.0, 1.2), look_at=(0.0, 0.0, 0.5)),
+        PoseOverride(position=(-3.0, -3.0, 0.8), look_at=(0.0, 0.0, 0.5)),
+    ]
+    cams = CameraRig.ring(
+        n=3,
+        radius=4.0,
+        height=1.5,
+        look_at=(0.0, 0.0, 0.0),
+        focal=800.0,
+        width=640,
+        height_px=480,
+        overrides=overrides,
+    )
+    gt = np.array([0.1, 0.1, 0.5], dtype=np.float64)
+    for cam, ov in zip(cams, overrides, strict=True):
+        # Explicit position becomes the camera centre.
+        assert np.allclose(cam.centre(), ov.position, atol=1e-12)
+
+        # Rebuild P = K [R | t] from the stored intrinsics/extrinsics and project.
+        K = cam.intrinsics.matrix()
+        R = cam.rotation()
+        t = cam.translation()
+        P = K @ np.hstack([R, t.reshape(3, 1)])
+        uv_rebuilt, w = project_point(P, gt)
+        uv, w2 = cam.project(gt)
+        assert np.allclose(uv_rebuilt, uv, atol=1e-12)
+        assert w > 0
+        assert w == pytest.approx(w2)
+
+        # Rebuild centre from R/t.
+        centre_rebuilt = -R.T @ t
+        assert np.allclose(centre_rebuilt, ov.position, atol=1e-12)
+
+
+def test_ring_partial_overrides_keep_unspecified_cameras() -> None:
+    """A sparse mapping override leaves the other cameras byte-for-byte unchanged."""
+    base = CameraRig.ring(
+        n=3,
+        radius=4.0,
+        height=1.5,
+        look_at=(0.0, 0.0, 0.5),
+        focal=800.0,
+        width=640,
+        height_px=480,
+    )
+    override = PoseOverride(position=(4.0, 0.0, 2.0), look_at=(0.0, 0.0, 0.5))
+    cams = CameraRig.ring(
+        n=3,
+        radius=4.0,
+        height=1.5,
+        look_at=(0.0, 0.0, 0.5),
+        focal=800.0,
+        width=640,
+        height_px=480,
+        overrides={1: override},
+    )
+    assert cams[0].R == base[0].R and cams[0].t == base[0].t
+    assert cams[2].R == base[2].R and cams[2].t == base[2].t
+    assert np.allclose(cams[1].centre(), [4.0, 0.0, 2.0], atol=1e-12)
+
+
+def test_ring_overrides_validation() -> None:
+    """List length and mapping key must match the camera count."""
+    with pytest.raises(ValueError, match="overrides sequence has length 2, expected n=3"):
+        CameraRig.ring(
+            n=3,
+            radius=4.0,
+            height=1.5,
+            look_at=(0.0, 0.0, 0.5),
+            focal=800.0,
+            width=640,
+            height_px=480,
+            overrides=[
+                PoseOverride(position=(4.0, 0.0, 1.0), look_at=(0.0, 0.0, 0.5)),
+                PoseOverride(position=(0.0, 4.0, 1.0), look_at=(0.0, 0.0, 0.5)),
+            ],
+        )
+    with pytest.raises(ValueError, match="override key 3 out of range for n=3 cameras"):
+        CameraRig.ring(
+            n=3,
+            radius=4.0,
+            height=1.5,
+            look_at=(0.0, 0.0, 0.5),
+            focal=800.0,
+            width=640,
+            height_px=480,
+            overrides={3: PoseOverride(position=(4.0, 0.0, 1.0), look_at=(0.0, 0.0, 0.5))},
+        )
+
+
+def test_stations_pose_overrides_replace_position_and_look_at() -> None:
+    views = [
+        StationView(position=(0.0, -2.0, 1.5), look_at=(0.0, 0.0, 0.5)),
+        StationView(position=(0.0, 2.0, 1.5), look_at=(0.0, 0.0, 0.5)),
+    ]
+    override = PoseOverride(position=(1.0, 1.0, 2.0), look_at=(0.0, 0.0, 0.0))
+    cams = CameraRig.stations(
+        views,
+        focal=800.0,
+        width=640,
+        height_px=480,
+        overrides=[None, override],
+    )
+    assert np.allclose(cams[0].centre(), views[0].position, atol=1e-12)
+    assert np.allclose(cams[1].centre(), override.position, atol=1e-12)
 
 
 def _scene_with(occ: Occlusion) -> Manifest:
