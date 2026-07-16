@@ -9,6 +9,7 @@ from __future__ import annotations
 from .cameras import Camera, Intrinsics
 from .entities import Entity, EntityFrame
 from .manifest import build_manifest, write_manifest
+from .mtmc import build_mtmc_scene
 from .occluders import Box, Occluder, Sphere
 from .pose import (
     COCO17_EDGES,
@@ -20,12 +21,14 @@ from .pose import (
 )
 from .scene import Scene
 from .smoke import build_smoke_scene
+from .topology import CameraTopology, Station, TransitEdge
 
 __all__ = [
     "COCO17_EDGES",
     "COCO17_JOINTS",
     "Box",
     "Camera",
+    "CameraTopology",
     "Entity",
     "EntityFrame",
     "Intrinsics",
@@ -36,7 +39,10 @@ __all__ = [
     "Scene",
     "Skeleton",
     "Sphere",
+    "Station",
+    "TransitEdge",
     "build_manifest",
+    "build_mtmc_scene",
     "build_smoke_scene",
     "write_manifest",
 ]
