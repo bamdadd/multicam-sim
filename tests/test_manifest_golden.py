@@ -50,11 +50,13 @@ def _same_shape(got: object, ref: object, path: str = "") -> None:
     elif isinstance(ref, list):
         assert isinstance(got, list)
         assert len(got) == len(ref), f"length drift at {path or '<root>'}: {len(got)} != {len(ref)}"
-        for i, (g, r) in enumerate(zip(got, ref)):
+        for i, (g, r) in enumerate(zip(got, ref, strict=True)):
             _same_shape(g, r, f"{path}[{i}]")
     elif isinstance(ref, float):
         assert isinstance(got, float)
-        assert math.isclose(got, ref, rel_tol=1e-9, abs_tol=1e-12), f"float drift at {path}: {got} != {ref}"
+        assert math.isclose(got, ref, rel_tol=1e-9, abs_tol=1e-12), (
+            f"float drift at {path}: {got} != {ref}"
+        )
     else:
         assert got == ref, f"value drift at {path}: {got!r} != {ref!r}"
 
