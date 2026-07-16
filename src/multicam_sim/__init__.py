@@ -20,7 +20,7 @@ from .pose import (
     Skeleton,
 )
 from .scene import Scene
-from .smoke import build_smoke_scene
+from .smoke import build_pose_smoke_scene, build_smoke_scene
 from .topology import CameraTopology, Station, TransitEdge
 
 __all__ = [
@@ -43,6 +43,7 @@ __all__ = [
     "TransitEdge",
     "build_manifest",
     "build_mtmc_scene",
+    "build_pose_smoke_scene",
     "build_smoke_scene",
     "write_manifest",
 ]
