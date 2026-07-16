@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from multicam_sim.order import (
+    ActionEvent,
     BillOfMaterials,
     ItemPlacement,
     LineItem,
@@ -107,3 +108,39 @@ def test_serialises_to_order_json_sidecar(tmp_path: Path) -> None:
     payload = json.loads(result.to_json())
     assert payload["status"] == "fulfilled"
     assert OrderResult.model_validate(payload) == result
+
+
+def test_action_event_defaults_and_fields() -> None:
+    ev = ActionEvent(frame=5, item_id="part_a", entity_id="operator", hand_position=(1.0, 2.0, 3.0))
+    assert ev.action == "place"  # Literal default, room to widen
+    assert ev.hand_joint == "right_wrist"
+    assert ev.hand_position == (1.0, 2.0, 3.0)
+
+
+def test_verify_order_carries_sorted_actions_and_order_id() -> None:
+    bom = BillOfMaterials.from_counts({"part_a": 1, "part_b": 1})
+    placements = _place(["part_a", "part_b"])
+    actions = [
+        ActionEvent(frame=5, item_id="part_b", entity_id="op", hand_position=(0.0, 0.0, 1.0)),
+        ActionEvent(frame=2, item_id="part_a", entity_id="op", hand_position=(0.0, 0.0, 0.9)),
+    ]
+    result = verify_order(bom, placements, order_id="ORD-9", actions=actions)
+    assert result.order_id == "ORD-9"
+    # sorted by (frame, item_id) -> frame 2 first
+    assert [a.frame for a in result.actions] == [2, 5]
+    assert [a.item_id for a in result.actions] == ["part_a", "part_b"]
+
+
+def test_actions_round_trip_through_sidecar_json() -> None:
+    bom = BillOfMaterials.from_counts({"part_a": 1})
+    ev = ActionEvent(frame=3, item_id="part_a", entity_id="op", hand_position=(1.5, 0.0, 0.95))
+    result = verify_order(bom, _place(["part_a"]), order_id="ORD-1", actions=[ev])
+    payload = json.loads(result.to_json())
+    assert payload["actions"][0]["action"] == "place"
+    assert payload["actions"][0]["hand_position"] == [1.5, 0.0, 0.95]
+    assert OrderResult.model_validate(payload) == result
+
+
+def test_actions_default_empty_is_backward_compatible() -> None:
+    result = verify_order(BillOfMaterials.from_counts({"part_a": 1}), _place(["part_a"]))
+    assert result.actions == [] and result.order_id is None

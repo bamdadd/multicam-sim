@@ -36,6 +36,7 @@ from multicam_sim import write_manifest
 from multicam_sim.dsl.rig import CameraRig, StationView
 from multicam_sim.entities import Entity, EntityFrame
 from multicam_sim.order import (
+    ActionEvent,
     BillOfMaterials,
     ItemPlacement,
     Order,
@@ -139,6 +140,26 @@ def build_order() -> tuple[Order, list[ItemPlacement]]:
     return order, placements
 
 
+def build_actions(placements: list[ItemPlacement]) -> list[ActionEvent]:
+    """One 'place' ActionEvent per placement, synced to its frame, carrying the
+    operator's right-wrist world position at that frame (causal-fusion GT)."""
+    joints_by_frame = {f.frame: f.joints for f in operator_pose().frames}
+    hand = "right_wrist"
+    events: list[ActionEvent] = []
+    for p in placements:
+        wrist = joints_by_frame[p.placed_at_frame][hand]
+        events.append(
+            ActionEvent(
+                frame=p.placed_at_frame,
+                item_id=p.item,
+                entity_id="operator",
+                hand_joint=hand,
+                hand_position=(float(wrist[0]), float(wrist[1]), float(wrist[2])),
+            )
+        )
+    return events
+
+
 def entity_in_view(manifest: dict[str, Any], entity_id: str, cam_id: int) -> tuple[int, int]:
     """(#frames with any point in_view on ``cam_id``, #frames) for an entity."""
     entity = next(e for e in manifest["entities"] if e["id"] == entity_id)
@@ -159,9 +180,15 @@ def run(out_dir: Path) -> dict[str, Any]:
     write_manifest(scene, out_dir / "manifest.json")
     # read back the on-disk manifest as a plain dict — the genuine consumer path.
     manifest = json.loads((out_dir / "manifest.json").read_text())
-    result: OrderResult = verify_order(order.bom, placements)
-    write_order_json(order, out_dir / "order.json")
-    write_order_json(result, out_dir / "order_result.json")
+
+    actions = build_actions(placements)
+    # order.json = the order GT sidecar: status + per-item deltas + the synced
+    # ActionEvents (manifest stays byte-golden — actions never touch it).
+    result: OrderResult = verify_order(
+        order.bom, placements, order_id=order.order_id, actions=actions
+    )
+    write_order_json(result, out_dir / "order.json")
+    write_order_json(order, out_dir / "pick_list.json")
 
     OVERVIEW, WORKTOP = 0, 1
     item_ids = list(_ITEM_STAGING)
@@ -178,7 +205,13 @@ def run(out_dir: Path) -> dict[str, Any]:
             for item in item_ids
         },
     }
-    return {"manifest": manifest, "result": result, "visibility": visibility, "out_dir": out_dir}
+    return {
+        "manifest": manifest,
+        "result": result,
+        "actions": actions,
+        "visibility": visibility,
+        "out_dir": out_dir,
+    }
 
 
 def main() -> int:
@@ -196,6 +229,12 @@ def main() -> int:
         ov, wt = cams["overview"][0], cams["worktop"][0]
         print(f"  {name:9s}  overview in_view {ov:2d}/11   worktop in_view {wt:2d}/11")
     print(f"  order {summary['result'].status.value}")
+    for ev in summary["actions"]:
+        hx, hy, hz = ev.hand_position
+        print(
+            f"  action {ev.action} {ev.item_id} @frame {ev.frame} "
+            f"hand({ev.hand_joint})=({hx:.2f},{hy:.2f},{hz:.2f})"
+        )
     return 0
 
 
