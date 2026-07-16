@@ -110,6 +110,17 @@ only for MTMC scenes that declare one (see below).
   sightline is blocked. It **never** feeds the mask; it only grades how marginal
   an occlusion is.
 
+The sampler is configurable via `occ_frac_sample_count` and `occ_frac_jitter`,
+threaded through `observe` / `build_manifest` / `write_manifest` as optional
+keyword-only settings. `occ_frac_sample_count` is the total number of samples
+(centre point + deterministic jitter offsets); `occ_frac_jitter` is the radius
+of the neighbourhood in scene units. The defaults (`sample_count=7`,
+`jitter=0.05`) reproduce the original manifest output byte-for-byte. Increasing
+`sample_count` adds more deterministic directions (face and space diagonals of
+a cube after the six axis-aligned offsets) and therefore grades a marginal
+occlusion more finely. The sampling stays deterministic and RNG-free, so the
+same scene and settings always produce the same `occ_frac`.
+
 The manifest path is **non-raising**: an out-of-frame or behind-camera point is
 labelled (`in_view=false`, `visible=false`), not an error. Its `uv` is sanitised
 to finite values, and the manifest is written with `allow_nan=False`, so the JSON
