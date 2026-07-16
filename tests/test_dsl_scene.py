@@ -198,15 +198,12 @@ def _scene_with_occlusion(occ: Occlusion, *, num_frames: int = 50) -> dict:
 def test_during_seconds_matches_during_frames() -> None:
     """seconds window (0.5, 1.5) @ 30fps rounds to frames (15, 45) and produces
     the identical per-frame visible pattern for the occluded point."""
-    by_frames = _scene_with_occlusion(
-        Occlusion.sphere(size=0.15).blocks(camera=1).during((15, 45))
-    )
+    by_frames = _scene_with_occlusion(Occlusion.sphere(size=0.15).blocks(camera=1).during((15, 45)))
     by_seconds = _scene_with_occlusion(
         Occlusion.sphere(size=0.15).blocks(camera=1).during_seconds(0.5, 1.5)
     )
     vis_frames = [
-        fr["points"]["center"]["per_cam"][1]["visible"]
-        for fr in by_frames["entities"][0]["frames"]
+        fr["points"]["center"]["per_cam"][1]["visible"] for fr in by_frames["entities"][0]["frames"]
     ]
     vis_seconds = [
         fr["points"]["center"]["per_cam"][1]["visible"]
