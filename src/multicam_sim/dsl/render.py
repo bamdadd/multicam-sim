@@ -20,14 +20,80 @@ Future work is an open/closed swap of this Protocol, not a rewrite:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
 import numpy as np
 
+from ..cameras import Intrinsics
 from ..geometry import FloatArray
 
 if TYPE_CHECKING:
     from ..scene import Scene
+
+
+def _import_pyrender(what: str) -> tuple[Any, Any]:
+    """Lazily import ``pyrender``/``trimesh``, or raise a clear extra hint.
+
+    ``what`` names the caller so the message points at the right class.
+    """
+    try:
+        import pyrender
+        import trimesh
+    except ImportError as exc:  # pragma: no cover - optional extra
+        raise ImportError(
+            f"{what} needs the 'render' extra: pip install multicam-sim[render]"
+        ) from exc
+    return pyrender, trimesh
+
+
+def _build_pyrender_scene(
+    scene: Scene,
+    camera_id: int,
+    frame: int,
+    *,
+    point_radius: float,
+    bg: tuple[float, float, float],
+    add_light: bool,
+) -> tuple[Any, Intrinsics]:
+    """Assemble the pyrender scene for one camera/frame (shared by the backends).
+
+    Entities' named points become small spheres and occluders become their solids;
+    the camera is added with OpenCV intrinsics and the OpenCV->OpenGL pose flip.
+    Returns the ``pyrender.Scene`` and the camera's :class:`Intrinsics`.
+    """
+    pyrender, trimesh = _import_pyrender("The pyrender backend")
+
+    cam = scene.cameras[camera_id]
+    pr_scene = pyrender.Scene(bg_color=[*bg, 1.0], ambient_light=[0.4, 0.4, 0.4])
+
+    # entity points -> small spheres at this frame's ground-truth coords
+    for entity in scene.entities:
+        match = next((f for f in entity.frames if f.frame == frame), None)
+        if match is None:
+            continue
+        for xyz in match.points.values():
+            sphere = trimesh.creation.uv_sphere(radius=point_radius)
+            pose = np.eye(4)
+            pose[:3, 3] = xyz
+            pr_scene.add(pyrender.Mesh.from_trimesh(sphere), pose=pose)
+
+    # occluders -> their solids
+    for occ in scene.occluders:
+        solid = _occluder_mesh(occ)
+        if solid is not None:
+            pr_scene.add(pyrender.Mesh.from_trimesh(solid))
+
+    # camera: OpenCV intrinsics + OpenCV->OpenGL pose flip (RDF -> right/up/back)
+    intr = cam.intrinsics
+    pr_cam = pyrender.IntrinsicsCamera(fx=intr.fx, fy=intr.fy, cx=intr.cx, cy=intr.cy)
+    flip = np.diag([1.0, -1.0, -1.0])
+    pose = np.eye(4)
+    pose[:3, :3] = cam.rotation().T @ flip
+    pose[:3, 3] = cam.centre()
+    pr_scene.add(pr_cam, pose=pose)
+    if add_light:
+        pr_scene.add(pyrender.DirectionalLight(intensity=3.0), pose=pose)
+    return pr_scene, intr
 
 
 @runtime_checkable
@@ -55,44 +121,15 @@ class PyrenderBackend:
         self.bg = bg
 
     def render(self, scene: Scene, camera_id: int, frame: int) -> FloatArray:
-        try:
-            import pyrender
-            import trimesh
-        except ImportError as exc:  # pragma: no cover - optional extra
-            raise ImportError(
-                "PyrenderBackend needs the 'render' extra: pip install multicam-sim[render]"
-            ) from exc
-
-        cam = scene.cameras[camera_id]
-        pr_scene = pyrender.Scene(bg_color=[*self.bg, 1.0], ambient_light=[0.4, 0.4, 0.4])
-
-        # entity points -> small spheres at this frame's ground-truth coords
-        for entity in scene.entities:
-            match = next((f for f in entity.frames if f.frame == frame), None)
-            if match is None:
-                continue
-            for xyz in match.points.values():
-                sphere = trimesh.creation.uv_sphere(radius=self.point_radius)
-                pose = np.eye(4)
-                pose[:3, 3] = xyz
-                pr_scene.add(pyrender.Mesh.from_trimesh(sphere), pose=pose)
-
-        # occluders -> their solids
-        for occ in scene.occluders:
-            solid = _occluder_mesh(occ)
-            if solid is not None:
-                pr_scene.add(pyrender.Mesh.from_trimesh(solid))
-
-        # camera: OpenCV intrinsics + OpenCV->OpenGL pose flip (RDF -> right/up/back)
-        intr = cam.intrinsics
-        pr_cam = pyrender.IntrinsicsCamera(fx=intr.fx, fy=intr.fy, cx=intr.cx, cy=intr.cy)
-        flip = np.diag([1.0, -1.0, -1.0])
-        pose = np.eye(4)
-        pose[:3, :3] = cam.rotation().T @ flip
-        pose[:3, 3] = cam.centre()
-        pr_scene.add(pr_cam, pose=pose)
-        pr_scene.add(pyrender.DirectionalLight(intensity=3.0), pose=pose)
-
+        pyrender, _ = _import_pyrender("PyrenderBackend")
+        pr_scene, intr = _build_pyrender_scene(
+            scene,
+            camera_id,
+            frame,
+            point_radius=self.point_radius,
+            bg=self.bg,
+            add_light=True,
+        )
         renderer = pyrender.OffscreenRenderer(intr.width, intr.height)
         try:
             color, _ = renderer.render(pr_scene)

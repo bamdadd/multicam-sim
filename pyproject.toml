@@ -10,8 +10,8 @@ keywords = ["multi-view-geometry", "pinhole", "occlusion", "simulation", "comput
 dependencies = ["pydantic>=2.7", "numpy>=1.26"]
 
 [project.optional-dependencies]
-# Offscreen renderer backend (multicam_sim.dsl.render). Pixels are NOT the
-# contract, so this is optional and intentionally kept out of CI.
+# Offscreen renderer backend (multicam_sim.dsl.render / .depth). Pixels are NOT
+# the contract, so this is optional and intentionally kept out of CI.
 render = ["pyrender>=0.1.45", "trimesh>=4.0"]
 # 2D keypoint/skeleton overlay exporter (multicam_sim.overlay). Light pure-drawing
 # dependency; installed in dev so the frames path is exercised in CI.
@@ -41,6 +41,17 @@ dev = [
     # light drawing dep for the overlay exporter's frames path (exercised in CI).
     "pillow>=10.0",
 ]
+
+[tool.uv]
+# pyrender declares PyOpenGL==3.1.0 (a hard `==`), and that release's OSMesa
+# bindings lack OSMesaCreateContextAttribs -- which pyrender's own OSMesa platform
+# imports, so its headless path dies with
+# "ImportError: cannot import name 'OSMesaCreateContextAttribs'".
+# The pin cannot be widened from the `render` extra (uv rejects `pyopengl>=3.1.7`
+# against `==3.1.0` as unsatisfiable), so it is overridden here. pyopengl reaches
+# the graph only via the `render` extra, which CI never installs.
+# See docs/renderer-eval.md.
+override-dependencies = ["pyopengl>=3.1.7"]
 
 [tool.uv.sources]
 # path dep to the sibling checkout; CI checks the repo out at ../multicam-occlusion.
