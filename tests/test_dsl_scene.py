@@ -15,6 +15,7 @@ from multicam_occlusion.triangulation import triangulate_dlt
 from multicam_sim import build_manifest
 from multicam_sim.cameras import Camera
 from multicam_sim.dsl import CameraRig, Occlusion, Path, SceneBuilder
+from multicam_sim.manifest import Manifest
 
 
 def _dsl_smoke_scene() -> SceneBuilder:
@@ -37,13 +38,13 @@ def _dsl_smoke_scene() -> SceneBuilder:
     )
 
 
-def _proj_mats(manifest: dict) -> np.ndarray:
+def _proj_mats(manifest: Manifest) -> np.ndarray:
     mats = []
-    for cam in manifest["cameras"]:
-        assert cam["convention"] == "opencv_rdf"
-        K = np.array(cam["K"], dtype=np.float64)
-        R = np.array(cam["R"], dtype=np.float64)
-        t = np.array(cam["t"], dtype=np.float64).reshape(3, 1)
+    for cam in manifest.cameras:
+        assert cam.convention == "opencv_rdf"
+        K = np.array(cam.K, dtype=np.float64)
+        R = np.array(cam.R, dtype=np.float64)
+        t = np.array(cam.t, dtype=np.float64).reshape(3, 1)
         mats.append(K @ np.hstack([R, t]))
     return np.stack(mats)
 
@@ -98,11 +99,11 @@ def test_fov_and_focal_are_consistent() -> None:
 
 def test_dsl_scene_shape_and_gt() -> None:
     manifest = build_manifest(_dsl_smoke_scene().build())
-    assert len(manifest["cameras"]) == 3
-    assert manifest["num_frames"] == 11
-    frames = manifest["entities"][0]["frames"]
-    assert frames[0]["points"]["center"]["xyz_gt"] == pytest.approx([0.0, -0.6, 0.5])
-    assert frames[-1]["points"]["center"]["xyz_gt"] == pytest.approx([0.0, 0.6, 0.5])
+    assert len(manifest.cameras) == 3
+    assert manifest.num_frames == 11
+    frames = manifest.entities[0].frames
+    assert frames[0].points["center"].xyz_gt == pytest.approx([0.0, -0.6, 0.5])
+    assert frames[-1].points["center"].xyz_gt == pytest.approx([0.0, 0.6, 0.5])
 
 
 def test_occlusion_is_selective_and_windowed() -> None:
@@ -110,14 +111,14 @@ def test_occlusion_is_selective_and_windowed() -> None:
     cameras 0 and 2 keep the point — visibility is emergent geometry, asserted
     from the actual manifest (not assumed equal to the requested window)."""
     manifest = build_manifest(_dsl_smoke_scene().build())
-    frames = manifest["entities"][0]["frames"]
+    frames = manifest.entities[0].frames
     occluded = []
     for fr in frames:
-        vis = [o["visible"] for o in fr["points"]["center"]["per_cam"]]
+        vis = [o.visible for o in fr.points["center"].per_cam]
         if not vis[1]:
-            occluded.append(fr["frame"])
+            occluded.append(fr.frame)
             assert vis[0] and vis[2], "other cameras must keep the point (selectivity)"
-            assert fr["points"]["center"]["per_cam"][1]["occ_frac"] > 0.0
+            assert fr.points["center"].per_cam[1].occ_frac > 0.0
     assert occluded, "expected a middle interval where camera 1 is occluded"
     assert 0 < len(occluded) < len(frames)
 
@@ -128,15 +129,15 @@ def test_dsl_recovers_occluded_point_through_real_dlt() -> None:
     manifest = build_manifest(_dsl_smoke_scene().build())
     Ps = _proj_mats(manifest)
     tested = False
-    for fr in manifest["entities"][0]["frames"]:
-        per_cam = fr["points"]["center"]["per_cam"]
-        mask = np.array([o["visible"] for o in per_cam], dtype=bool)
+    for fr in manifest.entities[0].frames:
+        per_cam = fr.points["center"].per_cam
+        mask = np.array([o.visible for o in per_cam], dtype=bool)
         if mask[1]:
             continue
         tested = True
         assert mask.sum() == 2
-        uvs = np.array([o["uv"] for o in per_cam], dtype=np.float64)
-        gt = np.array(fr["points"]["center"]["xyz_gt"], dtype=np.float64)
+        uvs = np.array([o.uv for o in per_cam], dtype=np.float64)
+        gt = np.array(fr.points["center"].xyz_gt, dtype=np.float64)
         recovered = triangulate_dlt(Ps, uvs, mask=mask)
         assert np.allclose(recovered, gt, atol=1e-6, rtol=0.0)
     assert tested, "expected at least one cam-1-occluded frame"
@@ -167,14 +168,14 @@ def test_occlusion_coverage_is_monotonic_on_occ_frac() -> None:
             .build()
         )
         m = build_manifest(scene)
-        return m["entities"][0]["frames"][5]["points"]["center"]["per_cam"][1]["occ_frac"]
+        return m.entities[0].frames[5].points["center"].per_cam[1].occ_frac
 
     fracs = [mid_occ_frac(c) for c in (0.5, 1.0, 2.0)]
     assert fracs == sorted(fracs)  # monotonic non-decreasing
     assert fracs[-1] > 0.0
 
 
-def _scene_with_occlusion(occ: Occlusion, *, num_frames: int = 50) -> dict:
+def _scene_with_occlusion(occ: Occlusion, *, num_frames: int = 50) -> Manifest:
     scene = (
         SceneBuilder(fps=30.0, num_frames=num_frames)
         .cameras(
@@ -202,13 +203,8 @@ def test_during_seconds_matches_during_frames() -> None:
     by_seconds = _scene_with_occlusion(
         Occlusion.sphere(size=0.15).blocks(camera=1).during_seconds(0.5, 1.5)
     )
-    vis_frames = [
-        fr["points"]["center"]["per_cam"][1]["visible"] for fr in by_frames["entities"][0]["frames"]
-    ]
-    vis_seconds = [
-        fr["points"]["center"]["per_cam"][1]["visible"]
-        for fr in by_seconds["entities"][0]["frames"]
-    ]
+    vis_frames = [fr.points["center"].per_cam[1].visible for fr in by_frames.entities[0].frames]
+    vis_seconds = [fr.points["center"].per_cam[1].visible for fr in by_seconds.entities[0].frames]
     assert vis_frames == vis_seconds
 
 

@@ -92,13 +92,14 @@ def test_pose_flows_through_manifest_per_joint() -> None:
         occluders=[],
     )
     manifest = build_manifest(scene)
-    points = manifest["entities"][0]["frames"][0]["points"]
+    points = manifest.entities[0].frames[0].points
     assert set(points) == set(COCO17_JOINTS)  # every joint labelled
     nose = points["nose"]
-    assert "xyz_gt" in nose and len(nose["xyz_gt"]) == 3  # GT 3D per joint
-    assert len(nose["per_cam"]) == 1  # per-camera 2D keypoint + occlusion label
-    assert set(nose["per_cam"][0]) >= {"cam", "uv", "visible"}
-    assert manifest["entities"][0]["edges"] == [list(e) for e in COCO17_EDGES]
+    assert len(nose.xyz_gt) == 3  # GT 3D per joint
+    assert len(nose.per_cam) == 1  # per-camera 2D keypoint + occlusion label
+    obs = nose.per_cam[0]
+    assert hasattr(obs, "cam") and hasattr(obs, "uv") and hasattr(obs, "visible")
+    assert manifest.entities[0].edges == [list(e) for e in COCO17_EDGES]
 
 
 def test_mesh_backend_is_abstract() -> None:

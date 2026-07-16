@@ -15,6 +15,7 @@ import pytest
 from multicam_occlusion.triangulation import triangulate_dlt
 
 from multicam_sim import build_manifest
+from multicam_sim.manifest import Manifest
 from multicam_sim.cameras import Camera, Intrinsics
 from multicam_sim.dsl import CameraRig, Occlusion, Path, SceneBuilder
 
@@ -214,7 +215,7 @@ def test_arc_over_adapted_span_matches_ring() -> None:
         assert r.t == a.t
 
 
-def _scene_with(occ: Occlusion) -> dict:
+def _scene_with(occ: Occlusion) -> Manifest:
     scene = (
         SceneBuilder(fps=30.0, num_frames=11)
         .cameras(_ring())
@@ -225,13 +226,13 @@ def _scene_with(occ: Occlusion) -> dict:
     return build_manifest(scene)
 
 
-def _occluded_frames(manifest: dict) -> list[int]:
+def _occluded_frames(manifest: Manifest) -> list[int]:
     out = []
-    for fr in manifest["entities"][0]["frames"]:
-        vis = [o["visible"] for o in fr["points"]["center"]["per_cam"]]
+    for fr in manifest.entities[0].frames:
+        vis = [o.visible for o in fr.points["center"].per_cam]
         if not vis[1]:
             assert vis[0] and vis[2], "occluder must stay selective to camera 1"
-            out.append(fr["frame"])
+            out.append(fr.frame)
     return out
 
 
@@ -241,4 +242,4 @@ def test_box_and_plane_occluders_block_the_target_camera(shape: str) -> None:
     manifest = _scene_with(factory(size=0.2).blocks(camera=1).during((3, 7)))
     occluded = _occluded_frames(manifest)
     assert occluded, f"{shape} occluder should block camera 1 in a middle interval"
-    assert 0 < len(occluded) < manifest["num_frames"]
+    assert 0 < len(occluded) < manifest.num_frames

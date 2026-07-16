@@ -27,6 +27,7 @@ Emits two ground-truth sidecars next to this file (``--out`` to change dir):
 from __future__ import annotations
 
 import argparse
+import json
 import math
 from pathlib import Path
 from typing import Any
@@ -155,7 +156,9 @@ def run(out_dir: Path) -> dict[str, Any]:
     scene = build_scene()
     order, placements = build_order()
 
-    manifest = write_manifest(scene, out_dir / "manifest.json")
+    write_manifest(scene, out_dir / "manifest.json")
+    # read back the on-disk manifest as a plain dict — the genuine consumer path.
+    manifest = json.loads((out_dir / "manifest.json").read_text())
     result: OrderResult = verify_order(order.bom, placements)
     write_order_json(order, out_dir / "order.json")
     write_order_json(result, out_dir / "order_result.json")
