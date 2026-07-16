@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 from multicam_sim import build_smoke_scene
-from multicam_sim.manifest import build_manifest, observe, occlusion_fraction
+from multicam_sim.manifest import Manifest, build_manifest, observe, occlusion_fraction
 
 # Snapshot of camera-1 occ_frac values for the smoke scene under the original
 # defaults (sample_count=7, jitter=0.05). These must stay byte-identical.
@@ -30,8 +30,8 @@ _SMOKE_CAM1_OCC_FRAC = {
 }
 
 
-def _cam1_occ_frac(manifest: dict, frame: int) -> float:
-    return manifest["entities"][0]["frames"][frame]["points"]["center"]["per_cam"][1]["occ_frac"]
+def _cam1_occ_frac(manifest: Manifest, frame: int) -> float | None:
+    return manifest.entities[0].frames[frame].points["center"].per_cam[1].occ_frac
 
 
 def test_occ_frac_defaults_reproduce_smoke_output() -> None:
@@ -97,10 +97,10 @@ def test_observe_passes_occ_frac_settings() -> None:
         occ_frac_sample_count=19,
         occ_frac_jitter=0.05,
     )
-    assert default_obs["occ_frac"] == occlusion_fraction(
+    assert default_obs.occ_frac == occlusion_fraction(
         camera, point, occluders, sample_count=7, jitter=0.05
     )
-    assert custom_obs["occ_frac"] == occlusion_fraction(
+    assert custom_obs.occ_frac == occlusion_fraction(
         camera, point, occluders, sample_count=19, jitter=0.05
     )
 

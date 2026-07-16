@@ -18,7 +18,7 @@ from multicam_sim.overlay import _draw_dashed_line
 
 
 def _smoke_manifest() -> dict:
-    return build_manifest(build_smoke_scene())
+    return build_manifest(build_smoke_scene()).model_dump()
 
 
 def test_importing_package_does_not_import_pillow() -> None:

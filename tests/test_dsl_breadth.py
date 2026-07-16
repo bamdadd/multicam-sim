@@ -15,9 +15,9 @@ import pytest
 from multicam_occlusion.triangulation import triangulate_dlt
 
 from multicam_sim import build_manifest
-from multicam_sim.manifest import Manifest
 from multicam_sim.cameras import Camera, Intrinsics
 from multicam_sim.dsl import CameraRig, Occlusion, Path, SceneBuilder
+from multicam_sim.manifest import Manifest
 
 
 def _ring() -> list[Camera]:

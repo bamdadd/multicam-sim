@@ -14,11 +14,11 @@ from multicam_sim import build_manifest, build_mtmc_scene, build_smoke_scene, va
 
 
 def _smoke_manifest() -> dict[str, Any]:
-    return build_manifest(build_smoke_scene())
+    return build_manifest(build_smoke_scene()).model_dump()
 
 
 def _mtmc_manifest() -> dict[str, Any]:
-    return build_manifest(build_mtmc_scene())
+    return build_manifest(build_mtmc_scene()).model_dump()
 
 
 def test_smoke_manifest_validates() -> None:
