@@ -71,15 +71,34 @@ def occlusion_fraction(
 
 
 def observe(camera: Camera, point3d: FloatArray, occluders: list[Occluder]) -> dict[str, Any]:
-    """One camera's observation of a world point: ``{cam, uv, visible, occ_frac}``."""
+    """One camera's observation of a world point.
+
+    Returns ``{cam, uv, in_view, visible, occ_frac}``:
+
+    * ``in_view``  — projects IN FRONT (w > 0) AND inside the image bounds. A point
+      behind the camera or off the sensor is ``in_view=False``.
+    * ``visible``  — the DLT mask: ``in_view AND not occluded`` (so ``visible``
+      implies ``in_view``). A point in a blind gap is ``in_view=False`` on every
+      camera and therefore ``visible=False`` everywhere.
+
+    Non-raising: an out-of-frame or behind-camera point is labelled, not an error.
+    ``uv`` is sanitised to finite values (behind/at-plane projections would be
+    non-finite) so the manifest is always strict JSON.
+    """
     uv, w = camera.project(point3d)
     in_front = w > 0.0
     in_image = bool(in_front and camera.in_image(uv))
+    in_view = bool(in_front and in_image)
     unoccluded = not _any_blocks(occluders, point3d, camera.centre())
-    visible = bool(in_front and in_image and unoccluded)
+    visible = bool(in_view and unoccluded)
+    u, v = float(uv[0]), float(uv[1])
+    if not (in_front and np.isfinite(u) and np.isfinite(v)):
+        # behind / at the image plane: pixel is meaningless, keep JSON finite.
+        u, v = 0.0, 0.0
     return {
         "cam": camera.id,
-        "uv": [float(uv[0]), float(uv[1])],
+        "uv": [u, v],
+        "in_view": in_view,
         "visible": visible,
         "occ_frac": occlusion_fraction(camera, point3d, occluders),
     }
@@ -119,16 +138,25 @@ def build_manifest(scene: Scene) -> dict[str, Any]:
             entry["edges"] = [list(e) for e in entity.edges]
         entities_out.append(entry)
 
-    return {
+    manifest: dict[str, Any] = {
         "cameras": [camera_entry(cam) for cam in scene.cameras],
         "fps": scene.fps,
         "num_frames": scene.num_frames,
         "entities": entities_out,
     }
+    # Optional MTMC topology (stations + directed transit edges). Emitted only
+    # when the scene declares one, so single-station manifests stay unchanged.
+    if scene.topology is not None:
+        manifest["topology"] = scene.topology.to_manifest()
+    return manifest
 
 
 def write_manifest(scene: Scene, path: str | Path) -> dict[str, Any]:
-    """Build the manifest and write it to ``path`` as JSON (full precision)."""
+    """Build the manifest and write it to ``path`` as JSON (full precision).
+
+    ``allow_nan=False`` so a non-finite pixel fails loudly rather than emitting
+    ``Infinity``/``NaN`` (invalid strict JSON) that a consumer would choke on.
+    """
     manifest = build_manifest(scene)
-    Path(path).write_text(json.dumps(manifest, indent=2))
+    Path(path).write_text(json.dumps(manifest, indent=2, allow_nan=False))
     return manifest

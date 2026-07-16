@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from .cameras import Camera
 from .entities import Entity
 from .occluders import OccluderUnion
+from .topology import CameraTopology
 
 
 class Scene(BaseModel):
@@ -14,6 +15,8 @@ class Scene(BaseModel):
 
     Occluders serialise as a discriminated union on their ``kind`` tag, so a
     scene round-trips through JSON without losing the Box/Sphere distinction.
+    ``topology`` is optional MTMC metadata (station adjacency + transit times),
+    emitted in the manifest only when present.
     """
 
     fps: float
@@ -21,3 +24,4 @@ class Scene(BaseModel):
     cameras: list[Camera]
     entities: list[Entity]
     occluders: list[OccluderUnion] = []
+    topology: CameraTopology | None = None
