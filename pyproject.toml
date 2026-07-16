@@ -13,6 +13,11 @@ dependencies = ["pydantic>=2.7", "numpy>=1.26"]
 # Offscreen renderer backend (multicam_sim.dsl.render). Pixels are NOT the
 # contract, so this is optional and intentionally kept out of CI.
 render = ["pyrender>=0.1.45", "trimesh>=4.0"]
+# 2D keypoint/skeleton overlay exporter (multicam_sim.overlay). Light pure-drawing
+# dependency; installed in dev so the frames path is exercised in CI.
+overlay = ["pillow>=10.0"]
+# MP4 output for the overlay exporter. Heavy video encoder kept optional.
+overlay-mp4 = ["pillow>=10.0", "imageio[ffmpeg]>=2.34"]
 
 [project.urls]
 Homepage = "https://github.com/bamdadd/multicam-sim"
@@ -33,6 +38,8 @@ dev = [
     "pre-commit>=3.8",
     # the real consumer reader — the smoke triangulates through its DLT.
     "multicam-occlusion",
+    # light drawing dep for the overlay exporter's frames path (exercised in CI).
+    "pillow>=10.0",
 ]
 
 [tool.uv.sources]
@@ -57,6 +64,11 @@ files = ["src"]
 # installed in CI; treat its imports as missing so mypy stays clean without it.
 [[tool.mypy.overrides]]
 module = ["pyrender.*", "trimesh.*"]
+ignore_missing_imports = true
+
+# Pillow/imageio are optional and imported lazily; keep mypy clean without them.
+[[tool.mypy.overrides]]
+module = ["PIL.*", "PIL", "imageio.*", "imageio"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
