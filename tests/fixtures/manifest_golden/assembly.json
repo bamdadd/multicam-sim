@@ -1,0 +1,6796 @@
+{
+  "cameras": [
+    {
+      "id": 0,
+      "K": [
+        [
+          1758.3855484509584,
+          0.0,
+          640.0
+        ],
+        [
+          0.0,
+          1758.3855484509584,
+          360.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "R": [
+        [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        [
+          -0.0,
+          0.274721127897378,
+          -0.9615239476408232
+        ],
+        [
+          0.0,
+          -0.9615239476408232,
+          -0.274721127897378
+        ]
+      ],
+      "t": [
+        0.0,
+        1.1538287371689877,
+        4.697731287045165
+      ],
+      "width": 1280,
+      "height": 720,
+      "convention": "opencv_rdf"
+    },
+    {
+      "id": 1,
+      "K": [
+        [
+          1584.0555861864293,
+          0.0,
+          640.0
+        ],
+        [
+          0.0,
+          1584.0555861864293,
+          360.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "R": [
+        [
+          1.0,
+          -0.0,
+          0.0
+        ],
+        [
+          0.0,
+          -0.5881716976750462,
+          -0.8087360843031887
+        ],
+        [
+          0.0,
+          0.8087360843031887,
+          -0.5881716976750462
+        ]
+      ],
+      "t": [
+        -2.9,
+        0.7278624758728698,
+        1.8895015787810863
+      ],
+      "width": 1280,
+      "height": 720,
+      "convention": "opencv_rdf"
+    }
+  ],
+  "fps": 30.0,
+  "num_frames": 11,
+  "entities": [
+    {
+      "id": "operator",
+      "frames": [
+        {
+          "frame": 0,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.28,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    546.86928556554,
+                    473.9694336958953
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2138.724769510543,
+                    105.39241299987135
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.28,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    733.1307144344598,
+                    473.9694336958953
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2594.9333137585427,
+                    105.39241299987135
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 1,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.3152671151375484,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    546.1027379843814,
+                    479.04266153789274
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2087.7999389187007,
+                    88.94543854193026
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.3152671151375484,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    733.8972620156185,
+                    479.04266153789274
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2535.6476900844577,
+                    88.94543854193026
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 2,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.3370633909777092,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    545.6226439057602,
+                    482.22005940112336
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2057.2494939188623,
+                    79.07869214824537
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.3370633909777092,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    734.3773560942395,
+                    482.22005940112336
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2500.0815003831535,
+                    79.07869214824537
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 3,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.33706339097770927,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    545.6226439057602,
+                    482.22005940112336
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2057.2494939188623,
+                    79.07869214824521
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.33706339097770927,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    734.3773560942395,
+                    482.22005940112336
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2500.0815003831535,
+                    79.07869214824521
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 4,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.3152671151375484,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    546.1027379843814,
+                    479.04266153789274
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2087.7999389187007,
+                    88.94543854193026
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.3152671151375484,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    733.8972620156185,
+                    479.04266153789274
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2535.6476900844577,
+                    88.94543854193026
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 5,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.28,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    546.86928556554,
+                    473.9694336958953
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2138.724769510543,
+                    105.39241299987135
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.28,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    733.1307144344598,
+                    473.9694336958953
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2594.9333137585427,
+                    105.39241299987135
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 6,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.24473288486245165,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    547.6234187890539,
+                    468.97836757013374
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2191.5871864789333,
+                    122.4651614324095
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.24473288486245165,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    732.376581210946,
+                    468.97836757013374
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2656.4746350053256,
+                    122.4651614324095
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 7,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.22293660902229082,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    548.083422509675,
+                    465.93393335595147
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2225.275575311391,
+                    133.34535610791966
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.22293660902229082,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    731.9165774903248,
+                    465.93393335595147
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2695.6939533475897,
+                    133.34535610791966
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 8,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.22293660902229082,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    548.083422509675,
+                    465.93393335595147
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2225.275575311391,
+                    133.34535610791966
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.22293660902229082,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    731.9165774903248,
+                    465.93393335595147
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2695.6939533475897,
+                    133.34535610791966
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 9,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.24473288486245162,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    547.6234187890539,
+                    468.97836757013374
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2191.5871864789337,
+                    122.4651614324095
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.24473288486245162,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    732.376581210946,
+                    468.97836757013374
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2656.474635005326,
+                    122.4651614324095
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 10,
+          "points": {
+            "nose": {
+              "xyz_gt": [
+                0.0,
+                0.1,
+                1.6
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    640.0,
+                    209.11543148605637
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3822.993391797556,
+                    -601.7480344703316
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_eye": {
+              "xyz_gt": [
+                0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    627.2919523291406,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3880.1420266794157,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_eye": {
+              "xyz_gt": [
+                -0.03,
+                0.1,
+                1.64
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    652.7080476708595,
+                    192.42387890341627
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3974.6397693974527,
+                    -675.1942207972713
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ear": {
+              "xyz_gt": [
+                0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    606.5217652293016,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3959.414735653959,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ear": {
+              "xyz_gt": [
+                -0.08,
+                0.05,
+                1.63
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    673.4782347706982,
+                    192.72631755500848
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4220.374436967659,
+                    -650.8696889895225
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_shoulder": {
+              "xyz_gt": [
+                0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    558.2029391664806,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3485.731235264065,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_shoulder": {
+              "xyz_gt": [
+                -0.2,
+                0.0,
+                1.45
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    721.7970608335194,
+                    261.68770895242244
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -4096.950677525408,
+                    -319.68342527857396
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_elbow": {
+              "xyz_gt": [
+                0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    532.4960463399258,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2625.2170664087594,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_elbow": {
+              "xyz_gt": [
+                -0.26,
+                0.12,
+                1.2
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    747.5039536600743,
+                    373.63089572442595
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -3268.3658825195757,
+                    -27.375246679344986
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_wrist": {
+              "xyz_gt": [
+                0.22,
+                0.28,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    546.86928556554,
+                    473.9694336958953
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2138.724769510543,
+                    105.39241299987135
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_wrist": {
+              "xyz_gt": [
+                -0.22,
+                0.28,
+                1.0
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    733.1307144344598,
+                    473.9694336958953
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2594.9333137585427,
+                    105.39241299987135
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_hip": {
+              "xyz_gt": [
+                0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    592.4412135463316,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2669.1960908508468,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_hip": {
+              "xyz_gt": [
+                -0.12,
+                0.0,
+                0.95
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    687.5587864536686,
+                    455.26856686653804
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2954.882084305596,
+                    311.865714231904
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_knee": {
+              "xyz_gt": [
+                0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    593.478231300621,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2112.5941748345736,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_knee": {
+              "xyz_gt": [
+                -0.12,
+                0.02,
+                0.52
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    686.5217686993789,
+                    615.6102553774863
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -2350.228204316695,
+                    652.6426220803972
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "left_ankle": {
+              "xyz_gt": [
+                0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    602.3492940575126,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1782.7855000479747,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            },
+            "right_ankle": {
+              "xyz_gt": [
+                -0.1,
+                0.0,
+                0.1
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    677.6507059424877,
+                    758.2226095021289
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    -1955.8416071942588,
+                    919.8268738329549
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "edges": [
+        [
+          "nose",
+          "left_eye"
+        ],
+        [
+          "nose",
+          "right_eye"
+        ],
+        [
+          "left_eye",
+          "right_eye"
+        ],
+        [
+          "left_eye",
+          "left_ear"
+        ],
+        [
+          "right_eye",
+          "right_ear"
+        ],
+        [
+          "left_ear",
+          "left_shoulder"
+        ],
+        [
+          "right_ear",
+          "right_shoulder"
+        ],
+        [
+          "left_shoulder",
+          "right_shoulder"
+        ],
+        [
+          "left_shoulder",
+          "left_elbow"
+        ],
+        [
+          "left_elbow",
+          "left_wrist"
+        ],
+        [
+          "right_shoulder",
+          "right_elbow"
+        ],
+        [
+          "right_elbow",
+          "right_wrist"
+        ],
+        [
+          "left_shoulder",
+          "left_hip"
+        ],
+        [
+          "right_shoulder",
+          "right_hip"
+        ],
+        [
+          "left_hip",
+          "right_hip"
+        ],
+        [
+          "left_hip",
+          "left_knee"
+        ],
+        [
+          "left_knee",
+          "left_ankle"
+        ],
+        [
+          "right_hip",
+          "right_knee"
+        ],
+        [
+          "right_knee",
+          "right_ankle"
+        ]
+      ]
+    },
+    {
+      "id": "part_a",
+      "frames": [
+        {
+          "frame": 0,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.75,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -380.3886972819091,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    427.38007888441825,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 1,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.75,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -380.3886972819091,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    427.38007888441825,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 2,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 3,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 4,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 5,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 6,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 7,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 8,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 9,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 10,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "part_b",
+      "frames": [
+        {
+          "frame": 0,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -436.0462625881951,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    639.9999999999998,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 1,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -436.0462625881951,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    639.9999999999998,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 2,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -436.0462625881951,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    639.9999999999998,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 3,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -436.0462625881951,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    639.9999999999998,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 4,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -436.0462625881951,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    639.9999999999998,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 5,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 6,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 7,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 8,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 9,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 10,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "part_c",
+      "frames": [
+        {
+          "frame": 0,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                3.05,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -491.703827894481,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    852.6199211155821,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 1,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                3.05,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -491.703827894481,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    852.6199211155821,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 2,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                3.05,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -491.703827894481,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    852.6199211155821,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 3,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                3.05,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -491.703827894481,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    852.6199211155821,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 4,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                3.05,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -491.703827894481,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    852.6199211155821,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 5,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                3.05,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -491.703827894481,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    852.6199211155821,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 6,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                3.05,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -491.703827894481,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    852.6199211155821,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 7,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                3.05,
+                -0.3,
+                0.9
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -491.703827894481,
+                    436.4515455848244
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    852.6199211155821,
+                    610.1140399241727
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 8,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 9,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "frame": 10,
+          "points": {
+            "center": {
+              "xyz_gt": [
+                2.9,
+                0.0,
+                0.92
+              ],
+              "per_cam": [
+                {
+                  "cam": 0,
+                  "uv": [
+                    -507.20630591139457,
+                    466.50295658108394
+                  ],
+                  "in_view": false,
+                  "visible": false,
+                  "occ_frac": 0.0
+                },
+                {
+                  "cam": 1,
+                  "uv": [
+                    640.0000000000003,
+                    340.9982426956916
+                  ],
+                  "in_view": true,
+                  "visible": true,
+                  "occ_frac": 0.0
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
