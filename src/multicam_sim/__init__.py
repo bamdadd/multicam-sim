@@ -8,7 +8,16 @@ from __future__ import annotations
 
 from .cameras import Camera, Intrinsics
 from .entities import Entity, EntityFrame
-from .manifest import build_manifest, write_manifest
+from .manifest import (
+    CameraManifest,
+    EntityManifest,
+    FrameObs,
+    Manifest,
+    PerCamObs,
+    PointObs,
+    build_manifest,
+    write_manifest,
+)
 from .mtmc import build_mtmc_scene
 from .occluders import Box, Occluder, Sphere
 from .overlay import export_overlay
@@ -30,12 +39,18 @@ __all__ = [
     "COCO17_JOINTS",
     "Box",
     "Camera",
+    "CameraManifest",
     "CameraTopology",
     "Entity",
     "EntityFrame",
+    "EntityManifest",
+    "FrameObs",
     "Intrinsics",
+    "Manifest",
     "MeshBackend",
     "Occluder",
+    "PerCamObs",
+    "PointObs",
     "PoseFrame",
     "PoseTrajectory",
     "Scene",
