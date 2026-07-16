@@ -79,32 +79,60 @@ pose layer slots in later **without a schema fork**:
             "center": {
               "xyz_gt": [x, y, z],
               "per_cam": [
-                {"cam": 0, "uv": [u, v], "visible": true, "occ_frac": 0.0}
+                {"cam": 0, "uv": [u, v], "in_view": true, "visible": true, "occ_frac": 0.0}
               ]
             }
           }
         }
       ]
     }
-  ]
+  ],
+  "topology": {
+    "stations": [{"id": "A", "camera_ids": [0]}, {"id": "B", "camera_ids": [1, 2]}],
+    "edges": [{"src": "A", "dst": "B", "transit_time_s": 0.25}]
+  }
 }
 ```
 
-`edges` is present only when the entity defines a skeleton.
+`edges` is present only when the entity defines a skeleton. `topology` is present
+only for MTMC scenes that declare one (see below).
 
-### Two occlusion fields, kept distinct
+### Three per-camera fields, kept distinct
 
-- **`visible`** (bool) — the **hard DLT contract**. `true` iff the point is in
-  front of the camera, inside the image bounds, **and** its segment to the camera
-  centre is not blocked by any occluder (ray-vs-occluder geometry). A consumer
-  masks triangulation on this field.
+- **`in_view`** (bool) — the point projects **in front** of the camera (`w > 0`)
+  **and** inside the image bounds `[0,width) x [0,height)`. Pure framing: ignores
+  occluders. A point in a blind gap is `in_view=false` on **every** camera.
+- **`visible`** (bool) — the **hard DLT mask**: `in_view AND not occluded` (its
+  segment to the camera centre is not blocked by any occluder). So **`visible`
+  implies `in_view`**; a consumer masks triangulation on this field.
 - **`occ_frac`** (float, optional) — a **continuous difficulty knob**: the
   fraction of a small deterministic jittered sample around the point whose
-  sightline is blocked. It **never** feeds the triangulation mask; it only grades
-  how marginal an occlusion is.
+  sightline is blocked. It **never** feeds the mask; it only grades how marginal
+  an occlusion is.
+
+The manifest path is **non-raising**: an out-of-frame or behind-camera point is
+labelled (`in_view=false`, `visible=false`), not an error. Its `uv` is sanitised
+to finite values, and the manifest is written with `allow_nan=False`, so the JSON
+is always strict (no `Infinity`/`NaN`).
 
 Floats are serialized at full double precision (no rounding), so a consumer that
 rebuilds `P = K [R | t]` recovers ground truth to ~machine epsilon.
+
+### `topology` — the MTMC adjacency contract (optional, top-level)
+
+For multi-target multi-camera scenes with **non-overlapping** stations, the
+manifest carries an optional `topology`:
+
+- **`stations`**: `[{ "id": str, "camera_ids": [int, ...] }]` — a named place and
+  the cameras that share (roughly) its view. Station ids are unique.
+- **`edges`**: `[{ "src": str, "dst": str, "transit_time_s": float }]` — **directed**
+  adjacency: an object leaving `src`'s coverage reaches `dst`'s coverage after
+  `transit_time_s` seconds. Endpoints must be declared station ids.
+
+A consumer's MTMC / re-identification path uses this to bound how long a target
+may be unseen while crossing the blind gap between adjacent stations. The
+`entity.id` is the cross-camera ground-truth identity a tracker must preserve
+across that gap (issue #11, stable track ids).
 
 ## Smoke (the proof)
 
@@ -116,6 +144,20 @@ triangulates a cam-1-occluded frame **from the other two views only** (masking o
 `visible`) through the **real** `multicam_occlusion.triangulate_dlt` — recovering
 ground truth to within `1e-6`. This proves occluded-in-one-view recovery through
 the actual consumer reader.
+
+### MTMC blind-gap smoke (`build_mtmc_scene()`)
+
+Non-overlapping counterpart. Three cameras on two stations — **A** = camera 0
+alone, **B** = cameras 1 & 2 as an overlapping stereo pair (slightly different
+per-camera targets/fov) — with disjoint FOVs, plus one object with a **stable
+`entity.id`** sweeping A → gap → B. The manifest exhibits, in one take, all three
+coverage regimes: station-A single-camera (`in_view=[T,F,F]`, correctly **not**
+triangulable) → a labelled **blind gap** (`in_view` false on every camera) →
+station-B stereo (`in_view=[F,T,T]`), where the **real**
+`multicam_occlusion.triangulate_dlt` recovers ground truth to ~machine epsilon
+(≈2e-15) from the two covering views. The scene emits a `topology` (A↔B with a
+transit time). This proves the `in_view` framing signal, the labelled blind gap,
+stable cross-camera identity, and topology end to end through the real reader.
 
 ## DSL grammar (`multicam_sim.dsl`)
 
@@ -132,11 +174,27 @@ verbatim), so the RDF / Z-up / `t = -R@C` convention is never re-derived.
 CameraRig.ring(n, radius, height, look_at, *, width, height_px, focal | fov_deg)
 CameraRig.line(n, start, end, look_at, *, width, height_px, focal | fov_deg)
 CameraRig.custom(extrinsics=[(R, t), ...], *, width, height_px, focal | fov_deg)
+CameraRig.stations([StationView(position, look_at, focal|fov_deg, width?, height_px?), ...],
+                   *, width, height_px, focal | fov_deg)   # shared defaults
 ```
 
 Intrinsics take **exactly one** of `focal` (pixels) or `fov_deg` (horizontal
 FOV); `focal = (width/2) / tan(fov/2)`. `ring` uses the smoke ring convention:
 eye `i = (radius·cos t, radius·sin t, height)`, `t = 2π·i/n`.
+
+**`stations` — non-overlapping / heterogeneous preset.** Unlike `ring` (one
+shared target, overlapping views), each `StationView` gives its **own** eye
+`position` and `look_at`, and may **override** the rig-wide intrinsics with its
+own `focal`/`fov_deg` and `width`/`height_px`. One preset, two modes:
+
+- **MTMC**: separated stations with disjoint FOVs — an object is in at most one
+  station's view at a time, and the space between them is a genuine **blind gap**
+  (`in_view=false` on every camera).
+- **Heterogeneous fusion**: co-located-ish stations with different targets/zoom —
+  e.g. camera A wide/high framing a person's volume, camera B close/zoomed framing
+  items on a bench. Different entities then fall in different cameras' `in_view`
+  ("human in A not B, items in B not A"), captured by the manifest's per-entity
+  per-camera `in_view` with **no schema change**.
 
 ### Movement — `Path` (a time → 3D-point function)
 
