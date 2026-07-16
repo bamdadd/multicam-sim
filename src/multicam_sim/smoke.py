@@ -141,3 +141,74 @@ def build_pose_smoke_scene() -> Scene:
         entities=[entity],
         occluders=[sphere],
     )
+
+
+# -----------------------------------------------------------------------------
+# Multi-entity smoke scene — two tracks with stable ids and diverging visibility.
+# -----------------------------------------------------------------------------
+
+# Two entities on opposing straight sweeps in y; their image-space trajectories
+# cross in some camera views. One sphere sits on camera 1's sightline to A's
+# mid-path point, so ``obj-a`` is visible=False in cam 1 for a middle interval
+# while ``obj-b`` (offset in x, off the sightline) stays visible in cam 1.
+_MULTI_A_ID = "obj-a"
+_MULTI_B_ID = "obj-b"
+_MULTI_A_X = 0.0
+_MULTI_B_X = 0.3
+_MULTI_Z = 0.5
+_MULTI_Y0 = -0.6
+_MULTI_Y1 = 0.6
+
+
+def _multi_a_at(frame: int) -> np.ndarray:
+    frac = frame / (_NUM_FRAMES - 1)
+    y = _MULTI_Y0 + frac * (_MULTI_Y1 - _MULTI_Y0)
+    return np.array([_MULTI_A_X, y, _MULTI_Z], dtype=np.float64)
+
+
+def _multi_b_at(frame: int) -> np.ndarray:
+    frac = frame / (_NUM_FRAMES - 1)
+    y = _MULTI_Y1 + frac * (_MULTI_Y0 - _MULTI_Y1)
+    return np.array([_MULTI_B_X, y, _MULTI_Z], dtype=np.float64)
+
+
+def build_multi_entity_scene() -> Scene:
+    """Construct a deterministic multi-entity smoke scene.
+
+    Three ring cameras and two entities with distinct ``id``s moving in opposite
+    directions so their image-space trajectories cross in some camera views. A
+    sphere sits on camera 1's sightline to ``obj-a``'s mid-path point, so
+    ``obj-a`` is occluded in camera 1 for a middle interval while ``obj-b``
+    (offset in x, off the sightline) stays visible in camera 1. The manifest
+    keeps each ``entity.id`` — the stable track identifier — across every frame.
+    """
+    intrinsics = Intrinsics.from_focal(_FOCAL, _WIDTH, _HEIGHT_PX)
+    cameras = [Camera.look_at(i, intrinsics, _ring_eye(i), _LOOK_AT) for i in range(3)]
+
+    entity_a = Entity(
+        id=_MULTI_A_ID,
+        frames=[
+            EntityFrame(frame=f, points={"center": _multi_a_at(f).tolist()})
+            for f in range(_NUM_FRAMES)
+        ],
+    )
+    entity_b = Entity(
+        id=_MULTI_B_ID,
+        frames=[
+            EntityFrame(frame=f, points={"center": _multi_b_at(f).tolist()})
+            for f in range(_NUM_FRAMES)
+        ],
+    )
+
+    mid_a = _multi_a_at(_NUM_FRAMES // 2)
+    cam1_centre = _ring_eye(1)
+    occ_centre = mid_a + _OCC_T * (cam1_centre - mid_a)
+    sphere = Sphere(center=occ_centre.tolist(), radius=_OCC_RADIUS)
+
+    return Scene(
+        fps=_FPS,
+        num_frames=_NUM_FRAMES,
+        cameras=cameras,
+        entities=[entity_a, entity_b],
+        occluders=[sphere],
+    )
