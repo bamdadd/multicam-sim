@@ -18,6 +18,7 @@ import numpy as np
 from pydantic import BaseModel
 
 from ..cameras import Camera, Intrinsics
+from ..geometry import UP_WORLD
 
 Vec3 = tuple[float, float, float]
 #: A uniform height (scalar) or one height per camera (sequence of length ``n``).
@@ -130,6 +131,96 @@ class CameraRig:
         cams: list[Camera] = []
         for i in range(n):
             angle = 2.0 * math.pi * i / n
+            eye = np.array(
+                [radius * math.cos(angle), radius * math.sin(angle), heights[i] + jitter[i]],
+                dtype=np.float64,
+            )
+            cams.append(Camera.look_at(i, intrinsics, eye, target))
+        return cams
+
+    @staticmethod
+    def stereo(
+        baseline: float,
+        look_at: Vec3,
+        *,
+        center: Vec3 = (0.0, 0.0, 0.0),
+        height: Heights,
+        width: int,
+        height_px: int,
+        focal: float | None = None,
+        fov_deg: float | None = None,
+        height_jitter: float = 0.0,
+        seed: int = 0,
+    ) -> list[Camera]:
+        """A 2-camera horizontal stereo pair, both facing ``look_at``.
+
+        The rig centre is ``center``; the view direction is ``look_at - center``.
+        The two eyes sit at ``center ± baseline/2 * right`` where ``right`` is the
+        horizontal axis ``forward × up_world`` (perpendicular to the view
+        direction). ``height`` sets the absolute eye ``z`` for each camera, and
+        ``height_jitter`` adds a seeded, reproducible vertical offset on top.
+        """
+        if baseline <= 0.0:
+            raise ValueError("stereo baseline must be > 0")
+        intrinsics = _intrinsics(width, height_px, focal, fov_deg)
+        target = np.asarray(look_at, dtype=np.float64)
+        center_arr = np.asarray(center, dtype=np.float64)
+        heights = _base_heights(2, height)
+        jitter = _jitter_offsets(2, height_jitter, seed)
+
+        forward = target - center_arr
+        forward_norm = float(np.linalg.norm(forward))
+        if forward_norm < 1e-12:
+            raise ValueError("stereo look_at must differ from center")
+        forward = forward / forward_norm
+        right = np.cross(forward, UP_WORLD)
+        right_norm = float(np.linalg.norm(right))
+        if right_norm < 1e-12:
+            raise ValueError("stereo view direction must not be parallel to world up")
+        right = right / right_norm
+
+        cams: list[Camera] = []
+        for side, sign in enumerate((-1.0, 1.0)):
+            eye = center_arr + sign * (baseline / 2.0) * right
+            eye[2] = heights[side] + jitter[side]
+            cams.append(Camera.look_at(side, intrinsics, eye, target))
+        return cams
+
+    @staticmethod
+    def arc(
+        n: int,
+        radius: float,
+        start_angle: float,
+        end_angle: float,
+        height: Heights,
+        look_at: Vec3,
+        *,
+        width: int,
+        height_px: int,
+        focal: float | None = None,
+        fov_deg: float | None = None,
+        height_jitter: float = 0.0,
+        seed: int = 0,
+    ) -> list[Camera]:
+        """``n`` cameras evenly spaced along a circular arc, all facing ``look_at``.
+
+        Endpoints are inclusive: ``n=2`` places one camera at ``start_angle`` and
+        one at ``end_angle``; ``n=1`` places a single camera at ``start_angle``.
+        Angles are radians, matching the convention of :meth:`ring`. ``height``
+        and ``height_jitter`` behave exactly as in :meth:`ring`.
+        """
+        if n < 1:
+            raise ValueError("arc needs n >= 1 cameras")
+        if radius <= 0.0:
+            raise ValueError("arc radius must be > 0")
+        intrinsics = _intrinsics(width, height_px, focal, fov_deg)
+        target = np.asarray(look_at, dtype=np.float64)
+        heights = _base_heights(n, height)
+        jitter = _jitter_offsets(n, height_jitter, seed)
+        cams: list[Camera] = []
+        span = end_angle - start_angle
+        for i in range(n):
+            angle = start_angle if n == 1 else start_angle + span * i / (n - 1)
             eye = np.array(
                 [radius * math.cos(angle), radius * math.sin(angle), heights[i] + jitter[i]],
                 dtype=np.float64,
