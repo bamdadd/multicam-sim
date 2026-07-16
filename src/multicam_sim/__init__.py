@@ -22,6 +22,7 @@ from .pose import (
 from .scene import Scene
 from .smoke import build_smoke_scene
 from .topology import CameraTopology, Station, TransitEdge
+from .validation import validate_manifest
 
 __all__ = [
     "COCO17_EDGES",
@@ -44,6 +45,7 @@ __all__ = [
     "build_manifest",
     "build_mtmc_scene",
     "build_smoke_scene",
+    "validate_manifest",
     "write_manifest",
 ]
 
