@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel
 
 from .cameras import Camera
@@ -25,3 +27,14 @@ class Scene(BaseModel):
     entities: list[Entity]
     occluders: list[OccluderUnion] = []
     topology: CameraTopology | None = None
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.topology is None:
+            return
+        known = {cam.id for cam in self.cameras}
+        for station in self.topology.stations:
+            for camera_id in station.camera_ids:
+                if camera_id not in known:
+                    raise ValueError(
+                        f"station {station.id!r} references unknown camera {camera_id!r}"
+                    )
