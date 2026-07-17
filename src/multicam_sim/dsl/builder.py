@@ -14,7 +14,7 @@ from ..entities import Entity, EntityFrame
 from ..occluders import OccluderUnion
 from ..scene import Scene
 from .motion import PathUnion
-from .occlusion import Occlusion
+from .occlusion import HandSweep, Occlusion
 
 
 @dataclass(frozen=True)
@@ -39,6 +39,7 @@ class SceneBuilder:
         self._cameras: list[Camera] = []
         self._entities: list[_EntitySpec] = []
         self._occlusions: list[Occlusion] = []
+        self._hand_sweeps: list[HandSweep] = []
 
     def cameras(self, cameras: list[Camera]) -> SceneBuilder:
         """Set the camera array (e.g. from :class:`multicam_sim.dsl.CameraRig`)."""
@@ -60,6 +61,11 @@ class SceneBuilder:
     def occlude(self, occlusion: Occlusion) -> SceneBuilder:
         """Add a declarative occlusion pattern (compiled to real geometry)."""
         self._occlusions.append(occlusion)
+        return self
+
+    def occlude_hand(self, sweep: HandSweep) -> SceneBuilder:
+        """Add a moving hand-proxy sweep (compiled to a HandOccluder)."""
+        self._hand_sweeps.append(sweep)
         return self
 
     def build(self) -> Scene:
@@ -89,6 +95,19 @@ class SceneBuilder:
             if target_id not in frames_by_id:
                 raise ValueError(f"occlusion targets unknown entity {target_id!r}")
             occluders.append(occ.realize(self._cameras, frames_by_id[target_id]))
+
+        for sweep in self._hand_sweeps:
+            if sweep.frames is not None and sweep.seconds is not None:
+                raise ValueError("hand sweep has both frames and seconds windows; use one")
+            if sweep.seconds is not None:
+                t0, t1 = sweep.seconds
+                f0 = int(round(t0 * self.fps))
+                f1 = int(round(t1 * self.fps))
+                sweep = sweep.model_copy(update={"frames": (f0, f1), "seconds": None})
+            target_id = sweep.entity if sweep.entity is not None else self._entities[0].id
+            if target_id not in frames_by_id:
+                raise ValueError(f"hand sweep targets unknown entity {target_id!r}")
+            occluders.append(sweep.realize(self._cameras, frames_by_id[target_id]))
 
         return Scene(
             fps=self.fps,

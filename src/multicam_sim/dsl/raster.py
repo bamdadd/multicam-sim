@@ -32,7 +32,7 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict
 
 from ..geometry import FloatArray
-from ..occluders import Box, Sphere
+from ..occluders import Box, Occluder, Sphere
 
 if TYPE_CHECKING:
     from ..cameras import Camera
@@ -327,9 +327,10 @@ class RasterizerBackend:
                 )
                 _rasterize_mesh(verts, faces, cfg.point_color, camera, framebuffer, zbuffer, cfg)
 
-        # occluders -> their solids
+        # occluders -> their solids, resolved to the static solid at this frame
+        # (a HandOccluder yields its swept sphere; statics return themselves).
         for occ in scene.occluders:
-            mesh = _occluder_mesh(occ, cfg)
+            mesh = _occluder_mesh(occ.at_frame(frame), cfg)
             if mesh is None:
                 continue
             verts, faces = mesh
@@ -339,10 +340,12 @@ class RasterizerBackend:
         return np.asarray(np.rint(image), dtype=np.uint8)
 
 
-def _occluder_mesh(
-    occ: Box | Sphere, cfg: RasterizerConfig
-) -> tuple[FloatArray, FloatArray] | None:
-    """Triangulate a Box/Sphere occluder into ``(verts, faces)`` world-space."""
+def _occluder_mesh(occ: Occluder, cfg: RasterizerConfig) -> tuple[FloatArray, FloatArray] | None:
+    """Triangulate a static Box/Sphere occluder into ``(verts, faces)`` world-space.
+
+    Callers pass the per-frame resolved solid (:meth:`Occluder.at_frame`); a
+    time-varying occluder never reaches here.
+    """
     if isinstance(occ, Sphere):
         return _icosphere(
             occ.radius, np.asarray(occ.center, dtype=np.float64), cfg.sphere_subdivisions

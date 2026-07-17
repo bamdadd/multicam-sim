@@ -27,7 +27,7 @@ from pydantic import BaseModel, ConfigDict
 
 from ..cameras import Camera
 from ..entities import EntityFrame
-from ..occluders import Box, OccluderUnion, Sphere
+from ..occluders import Box, HandKeyframe, HandOccluder, OccluderUnion, Sphere
 
 Vec3 = tuple[float, float, float]
 
@@ -142,3 +142,110 @@ class Occlusion(BaseModel):
             return Box(center=occ_centre.tolist(), half_extents=[extent, extent, extent])
         # plane: a thin slab oriented flat in z (finite plane approximation)
         return Box(center=occ_centre.tolist(), half_extents=[extent, extent, extent * 0.05])
+
+
+class HandSweep(BaseModel):
+    """A moving hand-proxy that sweeps across a camera's view of the target.
+
+    Domain-neutral: a hand reaching over an item on a work surface / conveyor. The
+    hand is a sphere placed a small ``offset`` fraction from the target toward the
+    camera centre (so it sits BETWEEN target and camera and actually occludes),
+    then swept laterally along the camera's right axis. Deterministic — the
+    trajectory is fixed keyframes, NO RNG.
+
+    Two modes:
+
+    * ``pass`` (default) — enters one side, crosses centre at the window middle,
+      exits the other side. The target's ``visible_fraction`` traces a U-shaped
+      occlusion dose-response (1 -> ~0 -> 1); the hero artifact.
+    * ``approach`` — enters one side and STOPS centred over the target by the end
+      of the window, so ``visible_fraction`` is monotone non-increasing.
+
+    Compiles (via :meth:`realize`) to a :class:`~multicam_sim.occluders.HandOccluder`
+    on the scene; the same typed keyframes can drive a photoreal backend.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    radius: float
+    span: float = 0.35  # lateral half-width of the sweep (world units)
+    offset: float = 0.15  # fraction from target toward the camera centre
+    mode: Literal["pass", "approach"] = "pass"
+    camera: int | None = None
+    frames: tuple[int, int] | None = None
+    seconds: tuple[float, float] | None = None
+    entity: str | None = None
+    point_name: str = "center"
+
+    @classmethod
+    def sphere(cls, radius: float, *, span: float = 0.35) -> HandSweep:
+        """A hand-proxy sphere of ``radius`` sweeping ``span`` to each side."""
+        if radius <= 0.0:
+            raise ValueError("hand radius must be > 0")
+        if span <= 0.0:
+            raise ValueError("hand span must be > 0")
+        return cls(radius=radius, span=span)
+
+    def blocks(self, camera: int) -> HandSweep:
+        """Target the view of camera ``camera``."""
+        return self.model_copy(update={"camera": camera})
+
+    def during(self, frames: tuple[int, int]) -> HandSweep:
+        """Sweep across the inclusive frame window ``(frame0, frame1)``."""
+        if self.seconds is not None:
+            raise ValueError("hand sweep already has a seconds window; use .during_seconds(...)")
+        f0, f1 = frames
+        if f0 >= f1:
+            raise ValueError("during(frames): need frame0 < frame1 for a sweep")
+        return self.model_copy(update={"frames": frames})
+
+    def during_seconds(self, t0: float, t1: float) -> HandSweep:
+        """Sweep across the inclusive seconds window (converted by scene fps)."""
+        if self.frames is not None:
+            raise ValueError("hand sweep already has a frames window; use .during(...)")
+        if t0 >= t1:
+            raise ValueError("during_seconds(t0, t1): need t0 < t1 for a sweep")
+        return self.model_copy(update={"seconds": (t0, t1)})
+
+    def on(self, entity: str, point_name: str = "center") -> HandSweep:
+        """Target a named entity/point (default: first entity, point ``center``)."""
+        return self.model_copy(update={"entity": entity, "point_name": point_name})
+
+    def approaching(self) -> HandSweep:
+        """Switch to ``approach`` mode: enter and STOP centred (monotone curve)."""
+        return self.model_copy(update={"mode": "approach"})
+
+    def realize(self, cameras: list[Camera], entity_frames: list[EntityFrame]) -> HandOccluder:
+        """Compile to a :class:`HandOccluder` with deterministic keyframes."""
+        if self.camera is None:
+            raise ValueError("hand sweep has no target camera; call .blocks(camera=...)")
+        if self.frames is None:
+            raise ValueError("hand sweep has no window; call .during((f0, f1))")
+        if not 0 <= self.camera < len(cameras):
+            raise ValueError(f"camera {self.camera} out of range")
+        f0, f1 = self.frames
+        mid = (f0 + f1) // 2
+        frame = next((fr for fr in entity_frames if fr.frame == mid), None)
+        if frame is None or self.point_name not in frame.points:
+            raise ValueError(f"no point {self.point_name!r} at frame {mid}")
+
+        point = np.asarray(frame.points[self.point_name], dtype=np.float64)
+        cam = cameras[self.camera]
+        centre = cam.centre()
+        base = point + self.offset * (centre - point)
+        right = cam.rotation()[0]  # world-space right axis (unit)
+        right = right / np.linalg.norm(right)
+        step = self.span * right
+
+        if self.mode == "approach":
+            keyframes = [
+                HandKeyframe(frame=f0, center=(base - step).tolist()),
+                HandKeyframe(frame=f1, center=base.tolist()),
+            ]
+        else:  # pass
+            keyframes = [
+                HandKeyframe(frame=f0, center=(base - step).tolist()),
+                HandKeyframe(frame=mid, center=base.tolist()),
+                HandKeyframe(frame=f1, center=(base + step).tolist()),
+            ]
+        return HandOccluder(radius=self.radius, keyframes=keyframes)
