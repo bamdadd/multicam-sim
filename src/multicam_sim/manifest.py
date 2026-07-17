@@ -39,6 +39,7 @@ from pydantic import (
 )
 
 from .cameras import Camera
+from .dropout import SensorDropout, dropped_frames
 from .geometry import FloatArray
 from .noise import NoiseModel, PixelNoise
 from .occluders import Occluder
@@ -128,6 +129,13 @@ class PerCamObs(BaseModel):
     occ_frac: float | None = None
     visible_fraction: float | None = None
     occluded: StrictBool | None = None
+    # Sensor dropout (multicam_sim.dropout): ``True`` on a blanked/dropped frame,
+    # absent otherwise. Declared LAST so it serialises after the occlusion fields
+    # and keeps the golden manifest byte-identical when no frame is dropped
+    # (exclude_none). A dropped observation is blank: not in view, not visible,
+    # no occlusion score / occlusion label — dropout is a sensor gap, never a 0.0
+    # occlusion.
+    dropped: StrictBool | None = None
 
     @field_validator("uv")
     @classmethod
@@ -154,6 +162,21 @@ class PerCamObs(BaseModel):
     def _visible_implies_in_view(self) -> PerCamObs:
         if self.visible and not self.in_view:
             raise ValueError("visible implies in_view, but in_view is false")
+        return self
+
+    @model_validator(mode="after")
+    def _dropped_is_blank(self) -> PerCamObs:
+        if self.dropped and (
+            self.in_view
+            or self.visible
+            or self.occ_frac is not None
+            or self.visible_fraction is not None
+            or self.occluded is not None
+        ):
+            raise ValueError(
+                "a dropped frame is a sensor gap: in_view/visible must be false and "
+                "occ_frac/visible_fraction/occluded absent (dropout is not a zero occlusion)"
+            )
         return self
 
 
@@ -257,6 +280,10 @@ class CameraManifest(BaseModel):
     height: int
     convention: str
     assumed: AssumedCalibration | None = None
+    # The camera's seeded sensor-dropout schedule (multicam_sim.dropout): the
+    # sorted frame indices this camera blanked. Absent (exclude_none) when dropout
+    # is off, keeping the manifest byte-identical to the no-dropout output.
+    dropped_frames: list[int] | None = None
 
     @field_validator("K")
     @classmethod
@@ -432,6 +459,7 @@ def observe(
     object_radius: float | None = None,
     pixel_noise: PixelNoise | None = None,
     rng: np.random.Generator | None = None,
+    dropped: bool = False,
 ) -> PerCamObs:
     """One camera's observation of a world point.
 
@@ -457,6 +485,12 @@ def observe(
     noise is active and the projection is valid, so the RNG advances one pair per
     observed point.
 
+    When ``dropped`` is set (a seeded sensor-dropout frame; see
+    :mod:`multicam_sim.dropout`), the observation is blanked — ``uv=[0,0]``,
+    ``in_view``/``visible`` false, ``occ_frac`` absent, ``dropped=True`` — so a
+    downstream reader gets a coverage gap rather than a (mis)usable pixel. The
+    pixel-noise draw still runs first, so dropout never perturbs the noise stream.
+
     Non-raising: an out-of-frame or behind-camera point is labelled, not an error.
     ``uv`` is sanitised to finite values so the manifest is always strict JSON.
     """
@@ -473,6 +507,20 @@ def observe(
     elif pixel_noise is not None and pixel_noise.is_active and rng is not None:
         offset = rng.normal(0.0, pixel_noise.sigma_px, size=2)
         u, v = u + float(offset[0]), v + float(offset[1])
+    if dropped:
+        # Sensor gap: the camera delivered nothing this frame. Blank the whole
+        # observation (no occ_frac / visible_fraction / occluded — dropout is not
+        # a zero occlusion). The pixel-noise draw above still ran, so the noise
+        # stream advances identically with or without dropout (the two are
+        # independent).
+        return PerCamObs(
+            cam=camera.id,
+            uv=[0.0, 0.0],
+            in_view=False,
+            visible=False,
+            occ_frac=None,
+            dropped=True,
+        )
     visible_fraction: float | None = None
     occluded: bool | None = None
     if object_radius is not None:
@@ -511,12 +559,19 @@ def _assumed_calibration(camera: Camera, noise: NoiseModel | None) -> AssumedCal
     )
 
 
-def camera_entry(camera: Camera, noise: NoiseModel | None = None) -> CameraManifest:
+def camera_entry(
+    camera: Camera,
+    noise: NoiseModel | None = None,
+    *,
+    dropped: tuple[int, ...] = (),
+) -> CameraManifest:
     """Serialise a camera: full-precision (ground-truth) K, R, t + convention.
 
     When ``noise`` carries an active calibration drift, the slightly-wrong
     ASSUMED calibration is recorded additively in ``assumed``; otherwise
     ``assumed`` is absent and the entry is byte-identical to the noiseless output.
+    ``dropped`` is the camera's seeded dropout schedule (the frames it blanked),
+    recorded in ``dropped_frames``; an empty schedule leaves the field absent.
     """
     return CameraManifest(
         id=camera.id,
@@ -527,6 +582,7 @@ def camera_entry(camera: Camera, noise: NoiseModel | None = None) -> CameraManif
         height=camera.intrinsics.height,
         convention=CONVENTION,
         assumed=_assumed_calibration(camera, noise),
+        dropped_frames=list(dropped) if dropped else None,
     )
 
 
@@ -550,6 +606,7 @@ def build_manifest(
     *,
     object_radius: float | None = None,
     noise: NoiseModel | None = None,
+    dropout: SensorDropout | None = None,
 ) -> Manifest:
     """Compute the full typed manifest for ``scene`` (pure projection + boolean
     visibility; no renderer). Built typed all the way — no dict assembly.
@@ -577,6 +634,15 @@ def build_manifest(
     pixel_rng: np.random.Generator | None = None
     if noise is not None and noise.pixel.is_active:
         pixel_rng = np.random.default_rng([int(noise.seed), _PIXEL_NOISE_STREAM])
+
+    # Per-camera dropout schedule, computed once (independent seeded sub-streams).
+    drop_by_cam: dict[int, frozenset[int]] = {}
+    if dropout is not None and dropout.is_active:
+        drop_by_cam = {
+            cam.id: frozenset(dropped_frames(dropout, cam.id, scene.num_frames))
+            for cam in scene.cameras
+        }
+
     entities_out: list[EntityManifest] = []
     for entity in scene.entities:
         frames_out: list[FrameObs] = []
@@ -600,6 +666,7 @@ def build_manifest(
                             object_radius=object_radius,
                             pixel_noise=pixel_noise,
                             rng=pixel_rng,
+                            dropped=frame.frame in drop_by_cam.get(cam.id, frozenset()),
                         )
                         for cam in scene.cameras
                     ],
@@ -609,7 +676,10 @@ def build_manifest(
         entities_out.append(EntityManifest(id=entity.id, frames=frames_out, edges=edges))
 
     return Manifest(
-        cameras=[camera_entry(cam, noise) for cam in scene.cameras],
+        cameras=[
+            camera_entry(cam, noise, dropped=tuple(sorted(drop_by_cam.get(cam.id, ()))))
+            for cam in scene.cameras
+        ],
         fps=scene.fps,
         num_frames=scene.num_frames,
         entities=entities_out,
@@ -617,13 +687,21 @@ def build_manifest(
     )
 
 
-def write_manifest(scene: Scene, path: str | Path, *, noise: NoiseModel | None = None) -> Manifest:
+def write_manifest(
+    scene: Scene,
+    path: str | Path,
+    *,
+    noise: NoiseModel | None = None,
+    dropout: SensorDropout | None = None,
+) -> Manifest:
     """Build the typed manifest and write it to ``path`` as JSON.
 
     Serialised via :meth:`Manifest.to_json` — byte-identical to the historical
-    ``json.dumps(..., indent=2, allow_nan=False)`` output when ``noise`` is off.
-    ``noise`` threads the seeded noise/drift knobs into :func:`build_manifest`.
+    ``json.dumps(..., indent=2, allow_nan=False)`` output when ``noise`` and
+    ``dropout`` are off. ``noise`` threads the seeded noise/drift knobs and
+    ``dropout`` the seeded per-camera sensor-dropout schedule into
+    :func:`build_manifest`.
     """
-    manifest = build_manifest(scene, noise=noise)
+    manifest = build_manifest(scene, noise=noise, dropout=dropout)
     Path(path).write_text(manifest.to_json())
     return manifest
