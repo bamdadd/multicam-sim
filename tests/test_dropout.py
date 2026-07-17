@@ -125,6 +125,36 @@ def test_partial_dropout_matches_schedule() -> None:
                     assert obs.dropped is None
 
 
+def test_dropped_frame_nulls_visible_fraction_even_with_object_radius() -> None:
+    """A1-coordination contract: a dropped frame carries NO visible_fraction /
+    occluded (absent, never 0.0) even when object_radius opts those labels in."""
+    scene = build_smoke_scene()
+    config = SensorDropout(seed=7, drop_prob=1.0)  # every frame dropped
+    manifest = build_manifest(scene, object_radius=0.1, dropout=config)
+
+    saw_obs = False
+    for entity in manifest.entities:
+        for frame in entity.frames:
+            for point in frame.points.values():
+                for obs in point.per_cam:
+                    saw_obs = True
+                    assert obs.dropped is True
+                    assert obs.visible_fraction is None  # absent, NOT 0.0
+                    assert obs.occluded is None
+    assert saw_obs
+
+    # sanity: with object_radius and NO dropout, the labels ARE populated, so the
+    # None above is dropout blanking them, not object_radius being ignored.
+    populated = build_manifest(scene, object_radius=0.1)
+    assert any(
+        obs.visible_fraction is not None
+        for entity in populated.entities
+        for frame in entity.frames
+        for point in frame.points.values()
+        for obs in point.per_cam
+    )
+
+
 def test_dropout_is_independent_of_pixel_noise_stream() -> None:
     """A dropped point still consumes its noise draw, so non-dropped points keep
     exactly the pixel-noise-only uv (the two seeded streams never couple)."""
