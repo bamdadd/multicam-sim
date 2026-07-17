@@ -21,7 +21,7 @@ from .motion import (
     SequencePath,
     WaypointPath,
 )
-from .occlusion import Occlusion
+from .occlusion import HandSweep, Occlusion
 from .rig import CameraRig, PoseOverride, StationView
 
 __all__ = [
@@ -29,6 +29,7 @@ __all__ = [
     "CalibrationDrift",
     "CameraRig",
     "CirclePath",
+    "HandSweep",
     "LinearPath",
     "NoiseModel",
     "Occlusion",

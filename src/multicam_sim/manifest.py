@@ -43,6 +43,7 @@ from .geometry import FloatArray
 from .noise import NoiseModel, PixelNoise
 from .occluders import Occluder
 from .scene import Scene
+from .visibility import silhouette_visible_fraction
 
 CONVENTION = "opencv_rdf"
 
@@ -108,13 +109,25 @@ _MAX_SAMPLE_COUNT: int = 1 + _JITTER_DIRS.shape[0]
 
 
 class PerCamObs(BaseModel):
-    """One camera's observation of a world point."""
+    """One camera's observation of a world point.
+
+    ``visible_fraction`` / ``occluded`` are the opt-in image-space occlusion
+    labels (see :mod:`multicam_sim.visibility`): the fraction of the object's
+    silhouette visible on this camera and whether any nearer occluder eats into it
+    (``visible_fraction < 1``). Both are ``None`` unless ``object_radius`` is
+    passed to :func:`build_manifest`, so the noiseless manifest stays
+    byte-identical. A DROPPED frame leaves them ``None`` too — dropout is not
+    occlusion. They are declared AFTER ``occ_frac`` so, when present, they
+    serialise in that order.
+    """
 
     cam: int
     uv: list[float]
     in_view: StrictBool
     visible: StrictBool
     occ_frac: float | None = None
+    visible_fraction: float | None = None
+    occluded: StrictBool | None = None
 
     @field_validator("uv")
     @classmethod
@@ -128,6 +141,13 @@ class PerCamObs(BaseModel):
     def _check_occ_frac_range(cls, value: float | None) -> float | None:
         if value is not None and not 0.0 <= value <= 1.0:
             raise ValueError("occ_frac must be in [0, 1]")
+        return value
+
+    @field_validator("visible_fraction")
+    @classmethod
+    def _check_visible_fraction_range(cls, value: float | None) -> float | None:
+        if value is not None and not 0.0 <= value <= 1.0:
+            raise ValueError("visible_fraction must be in [0, 1]")
         return value
 
     @model_validator(mode="after")
@@ -409,6 +429,7 @@ def observe(
     occ_frac_sample_count: int = 7,
     occ_frac_jitter: float = 0.05,
     *,
+    object_radius: float | None = None,
     pixel_noise: PixelNoise | None = None,
     rng: np.random.Generator | None = None,
 ) -> PerCamObs:
@@ -420,6 +441,14 @@ def observe(
     * ``occ_frac`` — continuous occlusion difficulty, configured by
       ``occ_frac_sample_count`` and ``occ_frac_jitter`` (see
       :func:`occlusion_fraction`).
+    * ``visible_fraction`` / ``occluded`` — the image-space silhouette labels
+      (see :func:`multicam_sim.visibility.silhouette_visible_fraction`), emitted
+      only when ``object_radius`` is given; otherwise both are ``None`` and the
+      manifest stays byte-identical.
+
+    ``occluders`` must be the per-frame static solids (already resolved via
+    :meth:`Occluder.at_frame`), so the sightline / silhouette maths only ever
+    sees a Box/Sphere.
 
     When ``pixel_noise`` is active and ``rng`` is supplied, a Gaussian offset
     (sigma ``pixel_noise.sigma_px``) is added to the OBSERVED ``uv`` only — the
@@ -444,6 +473,11 @@ def observe(
     elif pixel_noise is not None and pixel_noise.is_active and rng is not None:
         offset = rng.normal(0.0, pixel_noise.sigma_px, size=2)
         u, v = u + float(offset[0]), v + float(offset[1])
+    visible_fraction: float | None = None
+    occluded: bool | None = None
+    if object_radius is not None:
+        visible_fraction = silhouette_visible_fraction(camera, point3d, object_radius, occluders)
+        occluded = visible_fraction < 1.0
     return PerCamObs(
         cam=camera.id,
         uv=[u, v],
@@ -456,6 +490,8 @@ def observe(
             sample_count=occ_frac_sample_count,
             jitter=occ_frac_jitter,
         ),
+        visible_fraction=visible_fraction,
+        occluded=occluded,
     )
 
 
@@ -512,6 +548,7 @@ def build_manifest(
     occ_frac_sample_count: int = 7,
     occ_frac_jitter: float = 0.05,
     *,
+    object_radius: float | None = None,
     noise: NoiseModel | None = None,
 ) -> Manifest:
     """Compute the full typed manifest for ``scene`` (pure projection + boolean
@@ -521,13 +558,21 @@ def build_manifest(
     sampler (see :func:`occlusion_fraction`); the defaults reproduce the original
     byte-for-byte output.
 
+    ``object_radius`` opts into the image-space occlusion labels: when given, each
+    per-camera observation carries ``visible_fraction`` (silhouette-area fraction
+    visible, modelling the object as a sphere of that radius) and ``occluded``.
+    ``None`` (the default) omits both fields, keeping the manifest byte-identical.
+    Time-varying occluders (e.g. a :class:`~multicam_sim.occluders.HandOccluder`)
+    are resolved to their per-frame static solid before any sightline/silhouette
+    test, so ``visible``/``occ_frac`` are computed against the hand's true pose at
+    each frame.
+
     ``noise`` (a :class:`multicam_sim.noise.NoiseModel`) adds seeded, reproducible
     error: Gaussian pixel noise on the observed ``uv`` and a separately-recorded
     ASSUMED calibration under drift. Ground truth (``xyz_gt`` and the true
     ``K, R, t``) stays exact. ``noise=None`` (the default) or an all-zero
     :class:`NoiseModel` reproduces the noiseless output byte-for-byte.
     """
-    occluders: list[Occluder] = list(scene.occluders)
     pixel_noise = noise.pixel if noise is not None else None
     pixel_rng: np.random.Generator | None = None
     if noise is not None and noise.pixel.is_active:
@@ -536,6 +581,10 @@ def build_manifest(
     for entity in scene.entities:
         frames_out: list[FrameObs] = []
         for frame in entity.frames:
+            # Resolve every occluder to the static solid it presents at this
+            # frame (statics return themselves), so the sightline/silhouette
+            # tests only ever see a Box/Sphere.
+            occluders: list[Occluder] = [occ.at_frame(frame.frame) for occ in scene.occluders]
             points_out: dict[str, PointObs] = {}
             for name, xyz in frame.points.items():
                 point3d = np.asarray(xyz, dtype=np.float64)
@@ -548,6 +597,7 @@ def build_manifest(
                             occluders,
                             occ_frac_sample_count=occ_frac_sample_count,
                             occ_frac_jitter=occ_frac_jitter,
+                            object_radius=object_radius,
                             pixel_noise=pixel_noise,
                             rng=pixel_rng,
                         )

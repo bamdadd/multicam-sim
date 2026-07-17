@@ -21,7 +21,7 @@ from .manifest import (
 )
 from .mtmc import build_mtmc_scene
 from .noise import CalibrationDrift, NoiseModel, PixelNoise
-from .occluders import Box, Occluder, Sphere
+from .occluders import Box, HandKeyframe, HandOccluder, Occluder, Sphere
 from .overlay import export_overlay
 from .pose import (
     COCO17_EDGES,
@@ -35,6 +35,7 @@ from .scene import Scene
 from .smoke import build_multi_entity_scene, build_pose_smoke_scene, build_smoke_scene
 from .topology import CameraTopology, Station, TransitEdge
 from .validation import validate_manifest
+from .visibility import silhouette_visible_fraction
 
 __all__ = [
     "COCO17_EDGES",
@@ -49,6 +50,8 @@ __all__ = [
     "EntityFrame",
     "EntityManifest",
     "FrameObs",
+    "HandKeyframe",
+    "HandOccluder",
     "Intrinsics",
     "Manifest",
     "MeshBackend",
@@ -66,6 +69,7 @@ __all__ = [
     "TransitEdge",
     "build_manifest",
     "build_mtmc_scene",
+    "silhouette_visible_fraction",
     "build_multi_entity_scene",
     "build_pose_smoke_scene",
     "build_smoke_scene",
