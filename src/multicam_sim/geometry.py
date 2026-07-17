@@ -18,6 +18,8 @@ OpenCV pinhole, RDF axes:
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import numpy.typing as npt
 
@@ -40,6 +42,28 @@ def look_at_rotation(eye: FloatArray, target: FloatArray, up: FloatArray = UP_WO
     right = right / np.linalg.norm(right)
     down = np.cross(forward, right)
     return np.stack([right, down, forward], axis=0)
+
+
+def rotation_from_axis_angle(axis_angle: FloatArray) -> FloatArray:
+    """Rotation matrix from an axis-angle (rotation-vector) via Rodrigues.
+
+    The vector's direction is the rotation axis and its Euclidean norm is the
+    rotation angle in **radians**. A near-zero vector yields the identity (an
+    infinitesimal rotation), which is what a zero-magnitude calibration drift
+    should produce. Used to apply a small, seeded rotational perturbation to a
+    camera's world->camera ``R`` (see :meth:`multicam_sim.cameras.Camera.drifted`).
+    """
+    theta = float(np.linalg.norm(axis_angle))
+    if theta < 1e-12:
+        return np.eye(3, dtype=np.float64)
+    x, y, z = (float(c) / theta for c in axis_angle)
+    cross = np.array([[0.0, -z, y], [z, 0.0, -x], [-y, x, 0.0]], dtype=np.float64)
+    rotation: FloatArray = (
+        np.eye(3, dtype=np.float64)
+        + math.sin(theta) * cross
+        + (1.0 - math.cos(theta)) * (cross @ cross)
+    )
+    return rotation
 
 
 def camera_translation(rotation: FloatArray, centre: FloatArray) -> FloatArray:
