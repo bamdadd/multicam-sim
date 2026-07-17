@@ -1,5 +1,13 @@
 # multicam-sim
 
+![Three MTMC camera stations with non-overlapping fields of view watch one object cross a corridor on a synced timeline; it hands off from camera 0 to 1 to 2, with blind-gap frames where no camera sees it.](docs/assets/hero_grid.gif)
+
+*One object, three cameras with **disjoint** views, one timeline — a green border
+means that camera sees it, red means blind. The gaps between stations are the
+non-overlapping-coverage problem multicam-sim exists to benchmark. (Moving frames
+are the Linux/Modal [Kubric photoreal path](docs/kubric-modal.md); the analytic
+geometry, not the pixels, is the contract.)*
+
 **Can you recover a 3D point, or a human joint, when it is hidden in some camera
 views but still seen in others?** multicam-sim builds the synthetic multi-camera
 scenes you need to ask that question with ground truth in hand.
