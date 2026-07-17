@@ -81,7 +81,10 @@ def silhouette_visible_fraction(
 
     Endpoints are exact (``0.0`` fully covered, ``1.0`` no nearer occluder);
     partial values are the bounding-disc model described in the module docstring.
-    A behind-camera object returns ``0.0`` (no silhouette to see).
+    A behind-camera object returns ``0.0`` (no silhouette to see). This measures
+    occluder coverage only, NOT image-bounds clipping — an in-front point with no
+    nearer occluder returns ``1.0`` even if it projects outside the frame (use the
+    ``in_view`` flag for bounds).
     """
     if object_radius <= 0.0:
         raise ValueError("object_radius must be > 0")
@@ -92,7 +95,10 @@ def silhouette_visible_fraction(
     obj_r_px = object_radius * fx / obj_w
     if obj_r_px <= 0.0:
         return 1.0
-    object_area = math.pi * obj_r_px * obj_r_px
+    # Same token sequence as the full-containment branch of _disc_overlap_area
+    # (``math.pi * min(r0, r1) ** 2``) so a fully-covering occluder yields
+    # ``covered == object_area`` bit-identically -> exactly 0.0 on every arch.
+    object_area = math.pi * obj_r_px**2
 
     covered = 0.0
     for occ in occluders:
