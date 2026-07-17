@@ -9,6 +9,7 @@ from __future__ import annotations
 from .cameras import Camera, Intrinsics
 from .entities import Entity, EntityFrame
 from .manifest import (
+    AssumedCalibration,
     CameraManifest,
     EntityManifest,
     FrameObs,
@@ -19,6 +20,7 @@ from .manifest import (
     write_manifest,
 )
 from .mtmc import build_mtmc_scene
+from .noise import CalibrationDrift, NoiseModel, PixelNoise
 from .occluders import Box, Occluder, Sphere
 from .overlay import export_overlay
 from .pose import (
@@ -37,7 +39,9 @@ from .validation import validate_manifest
 __all__ = [
     "COCO17_EDGES",
     "COCO17_JOINTS",
+    "AssumedCalibration",
     "Box",
+    "CalibrationDrift",
     "Camera",
     "CameraManifest",
     "CameraTopology",
@@ -48,8 +52,10 @@ __all__ = [
     "Intrinsics",
     "Manifest",
     "MeshBackend",
+    "NoiseModel",
     "Occluder",
     "PerCamObs",
+    "PixelNoise",
     "PointObs",
     "PoseFrame",
     "PoseTrajectory",

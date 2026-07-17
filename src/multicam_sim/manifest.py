@@ -14,9 +14,15 @@ dict assembly, and the model carries the schema validators (so it is the single
 source of truth that :mod:`multicam_sim.validation` delegates to).
 :meth:`Manifest.to_json` serialises via ``model_dump_json`` and is
 **byte-identical** to the historical ``json.dumps(..., indent=2, allow_nan=False)``
-output: field order = declaration order, optional fields (``edges``/``topology``)
-omitted when absent, ``occ_frac`` present when set, full double float precision,
-strict/finite JSON (``uv`` is sanitised).
+output: field order = declaration order, optional fields (``edges``/``topology``/
+per-camera ``assumed``) omitted when absent, ``occ_frac`` present when set, full
+double float precision, strict/finite JSON (``uv`` is sanitised).
+
+Seeded noise/calibration-drift knobs (:mod:`multicam_sim.noise`) can be threaded
+through :func:`observe` / :func:`build_manifest` / :func:`write_manifest` to
+perturb the OBSERVED ``uv`` and record a slightly-wrong ASSUMED calibration
+(additively, in ``assumed``); ground truth stays exact and the all-off default
+reproduces the byte layout above.
 """
 
 from __future__ import annotations
@@ -34,10 +40,18 @@ from pydantic import (
 
 from .cameras import Camera
 from .geometry import FloatArray
+from .noise import NoiseModel, PixelNoise
 from .occluders import Occluder
 from .scene import Scene
 
 CONVENTION = "opencv_rdf"
+
+# Independent ``numpy.random.default_rng`` sub-stream tags derived alongside a
+# NoiseModel.seed so pixel noise and per-camera drift never share RNG state (and
+# a camera's drift is stable regardless of camera order). The values are
+# arbitrary fixed constants ("PXL"/"DRI" as hex) that only need to differ.
+_PIXEL_NOISE_STREAM = 0x50584C
+_DRIFT_STREAM = 0x445249
 
 # Fixed, deterministic jitter offsets (unit directions) for occ_frac sampling —
 # no RNG, so the difficulty knob is reproducible. The first six directions are
@@ -173,8 +187,47 @@ class EntityManifest(BaseModel):
         return self
 
 
+class AssumedCalibration(BaseModel):
+    """The drifted calibration a consumer receives under calibration drift.
+
+    Recorded (additively, on :class:`CameraManifest`) ONLY when drift is active.
+    The ground-truth ``K, R, t`` live on the parent camera entry and stay exact;
+    this holds the slightly-wrong ``K, R, t`` a downstream reader would use.
+    """
+
+    K: list[list[float]]
+    R: list[list[float]]
+    t: list[float]
+
+    @field_validator("K")
+    @classmethod
+    def _check_assumed_k_shape(cls, value: list[list[float]]) -> list[list[float]]:
+        if len(value) != 3 or any(len(row) != 3 for row in value):
+            raise ValueError("assumed.K must be a 3x3 matrix")
+        return value
+
+    @field_validator("R")
+    @classmethod
+    def _check_assumed_r_shape(cls, value: list[list[float]]) -> list[list[float]]:
+        if len(value) != 3 or any(len(row) != 3 for row in value):
+            raise ValueError("assumed.R must be a 3x3 matrix")
+        return value
+
+    @field_validator("t")
+    @classmethod
+    def _check_assumed_t_shape(cls, value: list[float]) -> list[float]:
+        if len(value) != 3:
+            raise ValueError("assumed.t must be a length-3 vector")
+        return value
+
+
 class CameraManifest(BaseModel):
-    """A camera's serialised intrinsics + world->camera extrinsics + convention."""
+    """A camera's serialised intrinsics + world->camera extrinsics + convention.
+
+    ``assumed`` is declared LAST so, when present, it serialises after the
+    ground-truth fields; it is omitted entirely (exclude_none) when calibration
+    drift is off, keeping the manifest byte-identical to the noiseless output.
+    """
 
     id: int
     K: list[list[float]]
@@ -183,6 +236,7 @@ class CameraManifest(BaseModel):
     width: int
     height: int
     convention: str
+    assumed: AssumedCalibration | None = None
 
     @field_validator("K")
     @classmethod
@@ -354,6 +408,9 @@ def observe(
     occluders: list[Occluder],
     occ_frac_sample_count: int = 7,
     occ_frac_jitter: float = 0.05,
+    *,
+    pixel_noise: PixelNoise | None = None,
+    rng: np.random.Generator | None = None,
 ) -> PerCamObs:
     """One camera's observation of a world point.
 
@@ -363,6 +420,13 @@ def observe(
     * ``occ_frac`` — continuous occlusion difficulty, configured by
       ``occ_frac_sample_count`` and ``occ_frac_jitter`` (see
       :func:`occlusion_fraction`).
+
+    When ``pixel_noise`` is active and ``rng`` is supplied, a Gaussian offset
+    (sigma ``pixel_noise.sigma_px``) is added to the OBSERVED ``uv`` only — the
+    geometric flags (``in_view``/``visible``) are computed from the TRUE
+    projection, so ground truth stays exact. The two draws are taken whenever
+    noise is active and the projection is valid, so the RNG advances one pair per
+    observed point.
 
     Non-raising: an out-of-frame or behind-camera point is labelled, not an error.
     ``uv`` is sanitised to finite values so the manifest is always strict JSON.
@@ -377,6 +441,9 @@ def observe(
     if not (in_front and np.isfinite(u) and np.isfinite(v)):
         # behind / at the image plane: pixel is meaningless, keep JSON finite.
         u, v = 0.0, 0.0
+    elif pixel_noise is not None and pixel_noise.is_active and rng is not None:
+        offset = rng.normal(0.0, pixel_noise.sigma_px, size=2)
+        u, v = u + float(offset[0]), v + float(offset[1])
     return PerCamObs(
         cam=camera.id,
         uv=[u, v],
@@ -392,8 +459,29 @@ def observe(
     )
 
 
-def camera_entry(camera: Camera) -> CameraManifest:
-    """Serialise a camera: full-precision K, R, t + convention."""
+def _assumed_calibration(camera: Camera, noise: NoiseModel | None) -> AssumedCalibration | None:
+    """The drifted (assumed) calibration for ``camera``, or ``None`` when drift
+    is off. Seeded from ``noise.seed`` with a per-camera sub-stream so a camera's
+    drift is reproducible and independent of camera order and the pixel-noise pass.
+    """
+    if noise is None or not noise.drift.is_active:
+        return None
+    rng = np.random.default_rng([int(noise.seed), _DRIFT_STREAM, int(camera.id)])
+    drifted = camera.drifted(rng, noise.drift)
+    return AssumedCalibration(
+        K=drifted.intrinsics.matrix().tolist(),
+        R=[list(row) for row in drifted.R],
+        t=list(drifted.t),
+    )
+
+
+def camera_entry(camera: Camera, noise: NoiseModel | None = None) -> CameraManifest:
+    """Serialise a camera: full-precision (ground-truth) K, R, t + convention.
+
+    When ``noise`` carries an active calibration drift, the slightly-wrong
+    ASSUMED calibration is recorded additively in ``assumed``; otherwise
+    ``assumed`` is absent and the entry is byte-identical to the noiseless output.
+    """
     return CameraManifest(
         id=camera.id,
         K=camera.intrinsics.matrix().tolist(),
@@ -402,6 +490,7 @@ def camera_entry(camera: Camera) -> CameraManifest:
         width=camera.intrinsics.width,
         height=camera.intrinsics.height,
         convention=CONVENTION,
+        assumed=_assumed_calibration(camera, noise),
     )
 
 
@@ -422,6 +511,8 @@ def build_manifest(
     scene: Scene,
     occ_frac_sample_count: int = 7,
     occ_frac_jitter: float = 0.05,
+    *,
+    noise: NoiseModel | None = None,
 ) -> Manifest:
     """Compute the full typed manifest for ``scene`` (pure projection + boolean
     visibility; no renderer). Built typed all the way — no dict assembly.
@@ -429,8 +520,18 @@ def build_manifest(
     ``occ_frac_sample_count`` / ``occ_frac_jitter`` configure the ``occ_frac``
     sampler (see :func:`occlusion_fraction`); the defaults reproduce the original
     byte-for-byte output.
+
+    ``noise`` (a :class:`multicam_sim.noise.NoiseModel`) adds seeded, reproducible
+    error: Gaussian pixel noise on the observed ``uv`` and a separately-recorded
+    ASSUMED calibration under drift. Ground truth (``xyz_gt`` and the true
+    ``K, R, t``) stays exact. ``noise=None`` (the default) or an all-zero
+    :class:`NoiseModel` reproduces the noiseless output byte-for-byte.
     """
     occluders: list[Occluder] = list(scene.occluders)
+    pixel_noise = noise.pixel if noise is not None else None
+    pixel_rng: np.random.Generator | None = None
+    if noise is not None and noise.pixel.is_active:
+        pixel_rng = np.random.default_rng([int(noise.seed), _PIXEL_NOISE_STREAM])
     entities_out: list[EntityManifest] = []
     for entity in scene.entities:
         frames_out: list[FrameObs] = []
@@ -447,6 +548,8 @@ def build_manifest(
                             occluders,
                             occ_frac_sample_count=occ_frac_sample_count,
                             occ_frac_jitter=occ_frac_jitter,
+                            pixel_noise=pixel_noise,
+                            rng=pixel_rng,
                         )
                         for cam in scene.cameras
                     ],
@@ -456,7 +559,7 @@ def build_manifest(
         entities_out.append(EntityManifest(id=entity.id, frames=frames_out, edges=edges))
 
     return Manifest(
-        cameras=[camera_entry(cam) for cam in scene.cameras],
+        cameras=[camera_entry(cam, noise) for cam in scene.cameras],
         fps=scene.fps,
         num_frames=scene.num_frames,
         entities=entities_out,
@@ -464,12 +567,13 @@ def build_manifest(
     )
 
 
-def write_manifest(scene: Scene, path: str | Path) -> Manifest:
+def write_manifest(scene: Scene, path: str | Path, *, noise: NoiseModel | None = None) -> Manifest:
     """Build the typed manifest and write it to ``path`` as JSON.
 
     Serialised via :meth:`Manifest.to_json` — byte-identical to the historical
-    ``json.dumps(..., indent=2, allow_nan=False)`` output.
+    ``json.dumps(..., indent=2, allow_nan=False)`` output when ``noise`` is off.
+    ``noise`` threads the seeded noise/drift knobs into :func:`build_manifest`.
     """
-    manifest = build_manifest(scene)
+    manifest = build_manifest(scene, noise=noise)
     Path(path).write_text(manifest.to_json())
     return manifest

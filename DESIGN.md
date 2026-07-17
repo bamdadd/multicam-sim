@@ -150,6 +150,39 @@ may be unseen while crossing the blind gap between adjacent stations. The
 `entity.id` is the cross-camera ground-truth identity a tracker must preserve
 across that gap (issue #11, stable track ids).
 
+### Noise & calibration drift (optional, seeded — issue #30)
+
+Projection is exact by default. A typed, seeded `NoiseModel`
+(`multicam_sim.noise`) can be threaded through `observe` / `build_manifest` /
+`write_manifest` (keyword-only `noise=`, mirroring the `occ_frac` settings) to
+add controlled, reproducible error **without touching ground truth**:
+
+- **`pixel`** (`PixelNoise`, `sigma_px`) — Gaussian noise, sigma in pixels, added
+  to the OBSERVED `per_cam[i].uv` only. `in_view`, `visible`, `occ_frac` and
+  `xyz_gt` are computed from the true projection and stay exact.
+- **`drift`** (`CalibrationDrift`) — small seeded perturbations to the ASSUMED
+  calibration a consumer receives: a small-angle axis-angle rotation on `R`
+  (`rotation_sigma_deg`, **degrees**), a per-axis offset on `t`
+  (`translation_sigma`, scene units), and per-axis offsets on `fx, fy`
+  (`focal_sigma_px`) and `cx, cy` (`principal_point_sigma_px`), all in pixels.
+
+`seed` drives independent `numpy.random.default_rng` sub-streams (pixel noise;
+per-camera drift) — never the global RNG.
+
+Drift is recorded **additively**: each camera entry gains an optional trailing
+field, present only when drift is active:
+
+```json
+{"id": 0, "K": [...], "R": [...], "t": [...], "width": 640, "height": 480,
+ "convention": "opencv_rdf",
+ "assumed": {"K": [[..],[..],[..]], "R": [[..],[..],[..]], "t": [..]}}
+```
+
+The ground-truth `K, R, t` on the entry are untouched; `assumed` holds the
+slightly-wrong calibration a downstream reader would use. With every knob at zero
+(or `noise=None`) no `uv` is perturbed and no `assumed` block is emitted, so the
+manifest is **byte-identical** to the noiseless output.
+
 ## Smoke (the proof)
 
 `build_smoke_scene()` hand-specifies 3 ring cameras, 1 point moving on a straight

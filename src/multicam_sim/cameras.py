@@ -21,7 +21,9 @@ from .geometry import (
     look_at_rotation,
     project_point,
     projection_matrix,
+    rotation_from_axis_angle,
 )
+from .noise import CalibrationDrift
 
 
 class Intrinsics(BaseModel):
@@ -162,3 +164,41 @@ class Camera(BaseModel):
         """Is pixel ``uv`` inside the image bounds ``[0, width) x [0, height)``?"""
         u, v = float(uv[0]), float(uv[1])
         return 0.0 <= u < self.intrinsics.width and 0.0 <= v < self.intrinsics.height
+
+    def drifted(self, rng: np.random.Generator, drift: CalibrationDrift) -> Camera:
+        """A seeded copy under calibration drift — the ASSUMED calibration.
+
+        ``self`` stays the ground truth used to project; this returns a camera
+        whose ``R``/``t`` and ``fx, fy, cx, cy`` are slightly perturbed per
+        ``drift`` (see :class:`multicam_sim.noise.CalibrationDrift`). The rotation
+        perturbation is a small-angle axis-angle applied on the left,
+        ``R' = dR @ R``. Draws are taken in a FIXED order (rotation, translation,
+        focal, principal point) so the result is reproducible for a given ``rng``
+        regardless of which sigmas are zero. Returns ``self`` unchanged when the
+        drift is inactive (so the caller can skip recording it).
+        """
+        if not drift.is_active:
+            return self
+        sigma_rad = math.radians(drift.rotation_sigma_deg)
+        axis_angle = rng.normal(0.0, sigma_rad, size=3)
+        delta_t = rng.normal(0.0, drift.translation_sigma, size=3)
+        delta_focal = rng.normal(0.0, drift.focal_sigma_px, size=2)
+        delta_pp = rng.normal(0.0, drift.principal_point_sigma_px, size=2)
+        delta_rotation = rotation_from_axis_angle(np.asarray(axis_angle, dtype=np.float64))
+        rotation = delta_rotation @ self.rotation()
+        translation = self.translation() + delta_t
+        intr = self.intrinsics
+        assumed = Intrinsics(
+            fx=intr.fx + float(delta_focal[0]),
+            fy=intr.fy + float(delta_focal[1]),
+            cx=intr.cx + float(delta_pp[0]),
+            cy=intr.cy + float(delta_pp[1]),
+            width=intr.width,
+            height=intr.height,
+        )
+        return Camera(
+            id=self.id,
+            intrinsics=assumed,
+            R=rotation.tolist(),
+            t=translation.tolist(),
+        )
