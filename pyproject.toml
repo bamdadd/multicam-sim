@@ -13,6 +13,13 @@ dependencies = ["pydantic>=2.7", "numpy>=1.26"]
 # Offscreen renderer backend (multicam_sim.dsl.render / .depth). Pixels are NOT
 # the contract, so this is optional and intentionally kept out of CI.
 render = ["pyrender>=0.1.45", "trimesh>=4.0"]
+# Photoreal Kubric/Blender backend (multicam_sim.dsl.kubric_backend). Kubric
+# CANNOT pip-install cleanly: it needs Blender's bundled Python and native libs.
+# This extra only pulls the Python package; to actually render, use the maintained
+# image: `docker run --rm kubricdockerhub/kubruntu python3 <script>.py`. Pixels are
+# NOT the contract, so like `render` this is optional and kept out of CI. See
+# docs/kubric.md.
+kubric = ["kubric>=0.1.1"]
 # 2D keypoint/skeleton overlay exporter (multicam_sim.overlay). Light pure-drawing
 # dependency; installed in dev so the frames path is exercised in CI.
 overlay = ["pillow>=10.0"]
@@ -74,7 +81,7 @@ files = ["src"]
 # The optional renderer backend (render extra) ships no stubs and is never
 # installed in CI; treat its imports as missing so mypy stays clean without it.
 [[tool.mypy.overrides]]
-module = ["pyrender.*", "trimesh.*"]
+module = ["pyrender.*", "trimesh.*", "kubric.*", "kubric"]
 ignore_missing_imports = true
 
 # Pillow/imageio are optional and imported lazily; keep mypy clean without them.

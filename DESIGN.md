@@ -279,8 +279,14 @@ frame through the real `triangulate_dlt`, exactly like the hand-built smoke.
 `RendererBackend` is a `Protocol` (Scene + camera + frame → `(H,W,3)` pixels).
 `PyrenderBackend` is an offscreen v1; `pyrender`/`trimesh` are an optional
 `render` extra imported lazily, never at package load and never in CI — pixels
-cannot break the manifest's green bar. **Kubric/Blender** is a future
-open/closed swap of this Protocol; a **Rust core via `pyo3`** for the analytic
+cannot break the manifest's green bar. `KubricBackend`
+(`multicam_sim.dsl.kubric_backend`, the `kubric` extra) is the photoreal
+open/closed swap of this Protocol: its Blender-free coordinate translation lives
+in `multicam_sim.dsl.kubric_spec` and is unit-tested (the built camera projects a
+point identically to `P = K[R|t]` within `1e-6`); the actual Blender render runs
+only inside the `kubricdockerhub/kubruntu` image. The exact OpenCV-RDF →
+Blender-camera conversion, docker recipe, and GT cross-check are in
+[`docs/kubric.md`](docs/kubric.md). A **Rust core via `pyo3`** for the analytic
 projection/occlusion path is a v2 concern.
 
 ## Pose manifest extension
