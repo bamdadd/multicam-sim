@@ -80,10 +80,26 @@ _ICO_VERTS: FloatArray = np.array(
 
 _ICO_FACES: FloatArray = np.array(
     [
-        (0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11),
-        (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8),
-        (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9),
-        (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1),
+        (0, 11, 5),
+        (0, 5, 1),
+        (0, 1, 7),
+        (0, 7, 10),
+        (0, 10, 11),
+        (1, 5, 9),
+        (5, 11, 4),
+        (11, 10, 2),
+        (10, 7, 6),
+        (7, 1, 8),
+        (3, 9, 4),
+        (3, 4, 2),
+        (3, 2, 6),
+        (3, 6, 8),
+        (3, 8, 9),
+        (4, 9, 5),
+        (2, 4, 11),
+        (6, 2, 10),
+        (8, 6, 7),
+        (9, 8, 1),
     ],
     dtype=np.int64,
 )
@@ -133,17 +149,32 @@ def _subdivide(verts: FloatArray, faces: FloatArray) -> tuple[FloatArray, FloatA
 #: The 8 corners of a unit cube (half-extent 1) and its 12 triangles.
 _BOX_CORNERS: FloatArray = np.array(
     [
-        (-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
-        (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1),
+        (-1, -1, -1),
+        (1, -1, -1),
+        (1, 1, -1),
+        (-1, 1, -1),
+        (-1, -1, 1),
+        (1, -1, 1),
+        (1, 1, 1),
+        (-1, 1, 1),
     ],
     dtype=np.float64,
 )
 
 _BOX_FACES: FloatArray = np.array(
     [
-        (0, 2, 1), (0, 3, 2), (4, 5, 6), (4, 6, 7),
-        (0, 1, 5), (0, 5, 4), (2, 3, 7), (2, 7, 6),
-        (1, 2, 6), (1, 6, 5), (0, 4, 7), (0, 7, 3),
+        (0, 2, 1),
+        (0, 3, 2),
+        (4, 5, 6),
+        (4, 6, 7),
+        (0, 1, 5),
+        (0, 5, 4),
+        (2, 3, 7),
+        (2, 7, 6),
+        (1, 2, 6),
+        (1, 6, 5),
+        (0, 4, 7),
+        (0, 7, 3),
     ],
     dtype=np.int64,
 )
@@ -294,9 +325,7 @@ class RasterizerBackend:
                     np.asarray(xyz, dtype=np.float64),
                     cfg.sphere_subdivisions,
                 )
-                _rasterize_mesh(
-                    verts, faces, cfg.point_color, camera, framebuffer, zbuffer, cfg
-                )
+                _rasterize_mesh(verts, faces, cfg.point_color, camera, framebuffer, zbuffer, cfg)
 
         # occluders -> their solids
         for occ in scene.occluders:
@@ -304,9 +333,7 @@ class RasterizerBackend:
             if mesh is None:
                 continue
             verts, faces = mesh
-            _rasterize_mesh(
-                verts, faces, cfg.occluder_color, camera, framebuffer, zbuffer, cfg
-            )
+            _rasterize_mesh(verts, faces, cfg.occluder_color, camera, framebuffer, zbuffer, cfg)
 
         image = np.clip(framebuffer, 0.0, 1.0) * 255.0
         return np.asarray(np.rint(image), dtype=np.uint8)

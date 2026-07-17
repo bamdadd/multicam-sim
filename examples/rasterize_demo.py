@@ -23,7 +23,8 @@ from pathlib import Path
 
 import numpy as np
 
-from multicam_sim.dsl import CameraRig, Occlusion, Path as MotionPath, SceneBuilder
+from multicam_sim.dsl import CameraRig, Occlusion, SceneBuilder
+from multicam_sim.dsl import Path as MotionPath
 from multicam_sim.dsl.raster import RasterizerBackend
 from multicam_sim.geometry import FloatArray
 from multicam_sim.scene import Scene
