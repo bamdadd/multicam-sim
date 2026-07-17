@@ -48,6 +48,11 @@ compute methods only.
 - **Occluder** (ABC) + **Box**(`center, half_extents`) / **Sphere**(`center, radius`)
   — `blocks_segment(a, b)` ray/segment-vs-solid for hard visibility.
 - **Entity**(`id, edges?`, `frames`) — each frame carries **named** 3D points.
+  `id` is the **stable track identifier**: the manifest keeps it byte-identical
+  across every frame, so a tracking consumer reads it as the ground-truth track
+  id for that entity across the whole take. `build_multi_entity_scene()`
+  demonstrates this end to end with two entities whose per-camera visibility
+  diverges on some frames.
 - **Scene**(`fps, num_frames, cameras, entities, occluders`).
 
 ### Named-points design (forward-compatible with pose)
