@@ -54,7 +54,7 @@ def _import_kubric(what: str) -> Any:
             f"{what} needs the 'kubric' extra AND Blender: `pip install "
             "multicam-sim[kubric]` only pulls the Python package, which cannot run "
             "without Blender's bundled interpreter. Render inside the maintained "
-            "image instead: `docker run --rm -v \"$PWD:/work\" -w /work "
+            'image instead: `docker run --rm -v "$PWD:/work" -w /work '
             "kubricdockerhub/kubruntu python3 <script>.py`. See docs/kubric.md."
         ) from exc
     return kb
