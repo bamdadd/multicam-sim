@@ -7,6 +7,7 @@ Camera convention mirrored from multicam-occlusion@59f4906 (see
 from __future__ import annotations
 
 from .cameras import Camera, Intrinsics
+from .dropout import SensorDropout
 from .entities import Entity, EntityFrame
 from .manifest import (
     AssumedCalibration,
@@ -63,6 +64,7 @@ __all__ = [
     "PoseFrame",
     "PoseTrajectory",
     "Scene",
+    "SensorDropout",
     "Skeleton",
     "Sphere",
     "Station",
