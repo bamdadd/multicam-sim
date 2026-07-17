@@ -18,10 +18,11 @@ from multicam_sim import (
     Intrinsics,
     NoiseModel,
     PixelNoise,
+    Scene,
     build_manifest,
     build_smoke_scene,
 )
-from multicam_sim.geometry import rotation_from_axis_angle
+from multicam_sim.geometry import project_point, projection_matrix, rotation_from_axis_angle
 from multicam_sim.manifest import observe
 
 
@@ -178,6 +179,72 @@ def test_drift_assumed_rotation_stays_orthonormal() -> None:
         assert cam.assumed is not None
         r = np.asarray(cam.assumed.R, dtype=np.float64)
         assert np.allclose(r @ r.T, np.eye(3), atol=1e-9)
+
+
+# Fixed seed for the reprojection-magnitude band below. Any fixed seed works
+# (drift is deterministic per seed); this one is pinned so the measured band is
+# reproducible.
+_DRIFT_BAND_SEED = 20240717
+
+
+def _reprojection_errors(scene: Scene, seed: int, drift: CalibrationDrift) -> np.ndarray:
+    """Per-point pixel gap between the TRUE and the RECORDED ASSUMED calibration.
+
+    For every camera, the assumed ``K, R, t`` are read verbatim from the manifest
+    (what a downstream consumer actually receives under drift) and assembled into
+    ``P = K [R | t]``; each smoke-scene world point is projected through both the
+    true camera and that assumed matrix, and the Euclidean pixel distance between
+    the two projections is collected. The smoke scene guarantees every point
+    projects in front of and inside every frame, so all samples are valid pixels.
+    """
+    manifest = build_manifest(scene, noise=NoiseModel(seed=seed, drift=drift))
+    world_points = [
+        np.asarray(xyz, dtype=np.float64)
+        for entity in scene.entities
+        for frame in entity.frames
+        for xyz in frame.points.values()
+    ]
+    errors: list[float] = []
+    for true_cam, cam in zip(scene.cameras, manifest.cameras, strict=True):
+        assumed = cam.assumed
+        assert assumed is not None
+        assumed_p = projection_matrix(
+            np.asarray(assumed.K, dtype=np.float64),
+            np.asarray(assumed.R, dtype=np.float64),
+            np.asarray(assumed.t, dtype=np.float64),
+        )
+        for point in world_points:
+            true_uv, true_w = true_cam.project(point)
+            assumed_uv, assumed_w = project_point(assumed_p, point)
+            assert true_w > 0.0 and assumed_w > 0.0  # both in front of the camera
+            errors.append(float(np.linalg.norm(np.asarray(true_uv) - np.asarray(assumed_uv))))
+    return np.asarray(errors, dtype=np.float64)
+
+
+def test_drift_reprojection_error_falls_in_expected_band() -> None:
+    """Pin the MAGNITUDE of true-vs-assumed disagreement, not just its existence.
+
+    The other drift tests pin reproducibility, that assumed != truth, and that R
+    stays orthonormal — but none pins *how much* the assumed calibration disagrees
+    with the truth, so a regression that silently weakens drift (a unit slip on
+    ``rotation_sigma_deg``, an accidental extra normalization, a half-strength
+    application) would pass them all. This projects the smoke-scene world points
+    through the true camera and through the recorded assumed calibration and
+    asserts the mean and max reprojection error land in a band.
+
+    Measured at ``_DRIFT_BAND_SEED`` with ``_active_drift()``: mean ~4.14 px,
+    max ~7.85 px. Reprojection error scales ~linearly with the drift sigmas, so
+    halving the drift gives ~2.07 / ~3.93 px and doubling gives ~8.26 / ~15.65 px.
+    The bands below (~0.7x–1.4x of the measured values) therefore reject both a
+    half-strength and a doubled-strength regression, while the test is fully
+    deterministic (fixed seed, exact arithmetic) so it never flakes.
+    """
+    scene = build_smoke_scene()
+    errors = _reprojection_errors(scene, seed=_DRIFT_BAND_SEED, drift=_active_drift())
+    mean_px = float(errors.mean())
+    max_px = float(errors.max())
+    assert 3.0 < mean_px < 5.5
+    assert 5.5 < max_px < 11.0
 
 
 # --------------------------------------------------------------------------- #
