@@ -132,3 +132,27 @@ predicted pixel.
 If the render never converges — a stuck pull or a headless-Blender hang — the
 recipe times out at 30 min per Sandbox; the geometry contract (the number above)
 is the deliverable, and the frame is garnish.
+
+## Moving pictures — the README hero (`recipes/hero_gif.py`)
+
+The same Sandbox path, extended from a single frame to a **frame range**, renders
+the README hero: three MTMC stations with disjoint fields of view watching one
+object cross a corridor, as looping GIFs (`docs/assets/hero_grid.gif` plus one per
+camera). Each tile's border is the *analytic* `in_view` label — green when a
+camera sees the object, red when it is blind — so the moving pixels illustrate the
+manifest without ever feeding it.
+
+Two things worth recording for anyone extending it:
+
+- **Static-per-frame, not keyframed.** This kubric build ignores
+  `keyframe_insert` animation and renders the object's static `.position`, so each
+  frame is rendered as a fresh `kb.Scene` at that frame's position.
+  `Blender.__init__` wipes bpy to factory-empty, so the per-frame scenes in one
+  `exec` never accumulate.
+- **`in_view` is a centre-point test.** At the blind-gap frames the object's
+  *centre* is outside every image, but a finite-radius sphere can still poke a few
+  pixels past one frame's edge. The border stays red (the analytic label is
+  authoritative); the sliver is just the sphere's radius, not a coverage claim.
+
+24 frames × 3 cameras renders in ~100 s warm; the grid GIF is ~0.5 MB, each
+per-camera GIF ~80 KB (palette-quantised, looping, README-light).
