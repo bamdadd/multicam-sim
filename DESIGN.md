@@ -183,6 +183,28 @@ slightly-wrong calibration a downstream reader would use. With every knob at zer
 (or `noise=None`) no `uv` is perturbed and no `assumed` block is emitted, so the
 manifest is **byte-identical** to the noiseless output.
 
+### Sensor dropout (optional, seeded — stream-level)
+
+Distinct from occlusion. Occlusion is a **scene** event (geometry blocks a point);
+dropout is a **sensor** event (a camera delivers no frame). A typed, seeded
+`SensorDropout` (`multicam_sim.dropout`) threads through `build_manifest` /
+`write_manifest` (keyword-only `dropout=`) and blanks whole camera-frames:
+
+- **`drop_prob`** — each frame of each camera is an independent Bernoulli drop.
+  `seed` drives a `numpy.random.default_rng([seed, tag, camera_id])` sub-stream
+  **per camera** — a fixed seed gives a byte-reproducible schedule, a different
+  seed a different one, and the stream is independent of the pixel-noise / drift
+  streams (a dropped point still consumes its noise draw, so non-dropped pixels
+  are untouched).
+
+A dropped observation is **blank**, not a zero occlusion: `in_view` and `visible`
+are `false`, `uv` is `[0, 0]`, the occlusion fields are **absent** (a dropped
+frame carries no `occ_frac` / `visible_fraction` — dropout is a coverage gap, not
+a fully-visible point with a 0.0 occluder), and a trailing `dropped: true` marks
+it. Each camera entry gains an optional `dropped_frames` list (its schedule).
+Both fields are present only when dropout is active, so `dropout=None` (or
+`drop_prob=0`) is **byte-identical** to the no-dropout output.
+
 ## Smoke (the proof)
 
 `build_smoke_scene()` hand-specifies 3 ring cameras, 1 point moving on a straight
