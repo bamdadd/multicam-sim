@@ -20,6 +20,7 @@ Usage (see ``scripts/serve-rtsp.sh`` for the dependency-checked wrapper):
 from __future__ import annotations
 
 import argparse
+import contextlib
 import itertools
 import os
 import shutil
@@ -81,11 +82,8 @@ def _start_mediamtx(binary: str, port: int) -> subprocess.Popen | None:
             f"{binary} not found; install it (brew install mediamtx), "
             f"or start one yourself and pass --no-mediamtx"
         )
-    cfg = tempfile.NamedTemporaryFile(
-        "w", suffix=".yml", prefix="mediamtx-", delete=False
-    )
-    cfg.write(f"rtsp: yes\nrtspAddress: :{port}\npaths:\n  all_others:\n")
-    cfg.close()
+    with tempfile.NamedTemporaryFile("w", suffix=".yml", prefix="mediamtx-", delete=False) as cfg:
+        cfg.write(f"rtsp: yes\nrtspAddress: :{port}\npaths:\n  all_others:\n")
     proc = subprocess.Popen(
         [binary, cfg.name],
         stdout=subprocess.DEVNULL,
@@ -99,12 +97,34 @@ def _ffmpeg_publisher(ffmpeg: str, url: str, width: int, height: int, fps: float
     """An ffmpeg process reading raw RGB frames on stdin and pushing H.264 RTSP."""
     return subprocess.Popen(
         [
-            ffmpeg, "-loglevel", "error",
-            "-f", "rawvideo", "-pix_fmt", "rgb24",
-            "-s", f"{width}x{height}", "-r", str(fps), "-i", "-",
-            "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
-            "-g", str(int(fps)), "-pix_fmt", "yuv420p",
-            "-f", "rtsp", "-rtsp_transport", "tcp", url,
+            ffmpeg,
+            "-loglevel",
+            "error",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgb24",
+            "-s",
+            f"{width}x{height}",
+            "-r",
+            str(fps),
+            "-i",
+            "-",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "ultrafast",
+            "-tune",
+            "zerolatency",
+            "-g",
+            str(int(fps)),
+            "-pix_fmt",
+            "yuv420p",
+            "-f",
+            "rtsp",
+            "-rtsp_transport",
+            "tcp",
+            url,
         ],
         stdin=subprocess.PIPE,
     )
@@ -151,7 +171,7 @@ def main() -> None:
     print("\nRTSP camera streams (pixels only, no ground truth):")
     for cid in cam_ids:
         print(f"  cam{cid}: {urls[cid]}")
-    print(f"\nfeed multicam-rt:\n  cargo run -p demo --release --features rtsp,window -- \\")
+    print("\nfeed multicam-rt:\n  cargo run -p demo --release --features rtsp,window -- \\")
     print("    " + " ".join(urls[c] for c in cam_ids))
     print("\nCtrl-C to stop.\n", flush=True)
 
@@ -175,10 +195,8 @@ def main() -> None:
     finally:
         for p in publishers.values():
             if p.stdin:
-                try:
+                with contextlib.suppress(BrokenPipeError):
                     p.stdin.close()
-                except BrokenPipeError:
-                    pass
             p.terminate()
         if mediamtx:
             mediamtx.terminate()
