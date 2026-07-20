@@ -29,6 +29,20 @@ The manifest is the contract. For each frame and each named point it records:
   camera, inside the image, and not blocked by an occluder);
 - `per_cam[i].occ_frac` — a continuous "how marginal is this occlusion" score.
 
+Optional per-camera labels, opt-in so the default manifest stays byte-identical:
+
+- `per_cam[i].visible_fraction` / `per_cam[i].occluded` — analytic image-space
+  silhouette occlusion (the fraction of the object's disc a nearer occluder eats,
+  and whether any does), emitted when you pass `object_radius=` to
+  `build_manifest`;
+- `per_cam[i].dropped` — a seeded per-camera sensor dropout (a blanked frame is a
+  coverage gap, never a zero occlusion), via `dropout=`;
+- seeded pixel noise + a slightly-wrong `assumed` calibration under calibration
+  drift, via `noise=` — ground truth stays exact.
+
+Moving occluders (a swept `HandOccluder`) are resolved to their per-frame solid
+before any visibility test, so these labels track the occluder's true pose.
+
 A downstream triangulator (the companion package
 [multicam-occlusion](https://github.com/bamdadd/multicam-occlusion)) reads the
 manifest, masks on `visible`, and recovers each 3D point from the cameras that
