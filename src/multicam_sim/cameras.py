@@ -92,6 +92,17 @@ class Intrinsics(BaseModel):
         """The ``3x3`` intrinsic matrix ``K``."""
         return intrinsic_matrix(self.fx, self.fy, self.cx, self.cy)
 
+    def fov_deg(self) -> tuple[float, float]:
+        """Horizontal and vertical field of view in degrees.
+
+        Inverts :meth:`from_fov`: ``fov = 2 * atan((size / 2) / f)`` per axis.
+        For square pixels (``fy == fx``) the two angles differ only by the
+        image aspect ratio.
+        """
+        fov_x = 2.0 * math.degrees(math.atan((self.width / 2.0) / self.fx))
+        fov_y = 2.0 * math.degrees(math.atan((self.height / 2.0) / self.fy))
+        return fov_x, fov_y
+
 
 class Camera(BaseModel):
     """A pinhole camera: intrinsics plus world->camera rotation ``R`` and

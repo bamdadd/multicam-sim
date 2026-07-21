@@ -83,3 +83,26 @@ def test_from_fov_validation(
 ) -> None:
     with pytest.raises(ValueError, match=match):
         Intrinsics.from_fov(fov_x, width, height, fov_y_deg=fov_y)
+
+
+def test_fov_deg_round_trips_horizontal() -> None:
+    intr = Intrinsics.from_fov(60.0, 640, 480)
+    fov_x, _ = intr.fov_deg()
+    assert fov_x == pytest.approx(60.0)
+
+
+def test_fov_deg_square_pixel_matches_aspect() -> None:
+    # Square pixels (fy == fx): the vertical FOV follows from the aspect ratio.
+    intr = Intrinsics.from_fov(90.0, 640, 480)
+    assert intr.fy == pytest.approx(intr.fx)
+    fov_x, fov_y = intr.fov_deg()
+    assert fov_x == pytest.approx(90.0)
+    # width/height = 640/480, so vertical is narrower than horizontal.
+    assert fov_y < fov_x
+
+
+def test_fov_deg_round_trips_independent_axes() -> None:
+    intr = Intrinsics.from_fov(90.0, 640, 480, fov_y_deg=60.0)
+    fov_x, fov_y = intr.fov_deg()
+    assert fov_x == pytest.approx(90.0)
+    assert fov_y == pytest.approx(60.0)
