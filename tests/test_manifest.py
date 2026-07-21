@@ -111,3 +111,30 @@ def test_no_occluders_occ_frac_is_zero() -> None:
     camera = scene.cameras[0]
     point = np.array([0.0, 0.0, 0.5], dtype=np.float64)
     assert occlusion_fraction(camera, point, [], sample_count=27, jitter=0.05) == 0.0
+
+
+def test_coverage_summary_flags_the_occluded_camera() -> None:
+    manifest = build_manifest(build_smoke_scene())
+    summary = manifest.coverage_summary()
+
+    # One entry per camera in the manifest.
+    assert set(summary) == {cam.id for cam in manifest.cameras}
+
+    # All visible fractions are in [0, 1].
+    for visible_fraction, mean_occ in summary.values():
+        assert 0.0 <= visible_fraction <= 1.0
+        assert mean_occ >= 0.0
+
+    # The most-occluded camera (highest mean occ_frac) has the lowest visible
+    # fraction — the whole point of the summary.
+    most_occluded = max(summary, key=lambda cam: summary[cam][1])
+    lowest_visible = min(summary, key=lambda cam: summary[cam][0])
+    assert most_occluded == lowest_visible
+
+
+def test_coverage_summary_mean_occ_ignores_none() -> None:
+    # Without object_radius the silhouette labels are None, but occ_frac is
+    # always recorded, so mean_occ_frac is a real average, never NaN.
+    manifest = build_manifest(build_smoke_scene())
+    for _visible_fraction, mean_occ in manifest.coverage_summary().values():
+        assert mean_occ == mean_occ  # not NaN
