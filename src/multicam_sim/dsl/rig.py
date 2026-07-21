@@ -362,6 +362,58 @@ class CameraRig:
         return cams
 
     @staticmethod
+    def grid(
+        rows: int,
+        cols: int,
+        corner: Vec3,
+        right: Vec3,
+        down: Vec3,
+        look_at: Vec3,
+        *,
+        width: int,
+        height_px: int,
+        focal: float | None = None,
+        fov_deg: float | None = None,
+        overrides: PoseOverrides | None = None,
+    ) -> list[Camera]:
+        """A planar ``rows`` x ``cols`` grid of cameras all facing ``look_at``.
+
+        Camera ``(r, c)`` sits at ``corner + c * right + r * down`` — a camera
+        wall / light-stage front. ``right`` and ``down`` are the spacing vectors
+        between adjacent columns and rows. Cameras are returned row-major with
+        id ``r * cols + c``. Built through :meth:`Camera.look_at`, so the
+        RDF / Z-up / ``t = -R @ C`` convention is never re-derived.
+
+        ``overrides`` replaces the computed pose for individual cameras (length
+        ``rows * cols``, or a mapping keyed by camera index); see :meth:`ring`
+        for the accepted shapes.
+        """
+        if rows < 1:
+            raise ValueError("grid needs rows >= 1")
+        if cols < 1:
+            raise ValueError("grid needs cols >= 1")
+        n = rows * cols
+        intrinsics = _intrinsics(width, height_px, focal, fov_deg)
+        origin = np.asarray(corner, dtype=np.float64)
+        right_vec = np.asarray(right, dtype=np.float64)
+        down_vec = np.asarray(down, dtype=np.float64)
+        base_target = np.asarray(look_at, dtype=np.float64)
+        resolved = _resolve_overrides(n, overrides)
+        cams: list[Camera] = []
+        for r in range(rows):
+            for c in range(cols):
+                i = r * cols + c
+                ov = resolved[i]
+                if ov is not None:
+                    eye = np.asarray(ov.position, dtype=np.float64)
+                    target = np.asarray(ov.look_at, dtype=np.float64)
+                else:
+                    eye = origin + c * right_vec + r * down_vec
+                    target = base_target
+                cams.append(Camera.look_at(i, intrinsics, eye, target))
+        return cams
+
+    @staticmethod
     def custom(
         extrinsics: list[tuple[list[list[float]], list[float]]],
         *,
