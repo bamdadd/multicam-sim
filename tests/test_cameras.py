@@ -8,6 +8,18 @@ import pytest
 from multicam_sim import Camera, Intrinsics
 
 
+def test_camera_forward_is_unit_and_matches_look_at() -> None:
+    intr = Intrinsics.from_fov(90.0, 640, 480)
+    eye = np.array([0.0, 0.0, 0.0])
+    target = np.array([1.0, 0.0, 0.0])
+    cam = Camera.look_at(0, intr, eye, target, np.array([0.0, 0.0, 1.0]))
+    forward = cam.forward()
+    assert forward.shape == (3,)
+    assert np.linalg.norm(forward) == pytest.approx(1.0, abs=1e-9)
+    expected = (target - eye) / np.linalg.norm(target - eye)
+    assert forward == pytest.approx(expected, abs=1e-9)
+
+
 def test_from_fov_acceptance_criteria() -> None:
     intr = Intrinsics.from_fov(90.0, 640, 480)
     assert intr.fx == pytest.approx(320.0, abs=1e-9)
