@@ -163,6 +163,10 @@ class Camera(BaseModel):
         """Camera centre ``C = -R^T @ t`` in world coordinates."""
         return camera_centre(self.rotation(), self.translation())
 
+    def forward(self) -> FloatArray:
+        """World-space unit viewing direction (OpenCV +z / third row of ``R``)."""
+        return self.rotation()[2].copy()
+
     def projection_matrix(self) -> FloatArray:
         """The ``3x4`` matrix ``P = K [R | t]``."""
         return projection_matrix(self.intrinsics.matrix(), self.rotation(), self.translation())
