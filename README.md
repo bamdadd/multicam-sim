@@ -1,5 +1,11 @@
 # multicam-sim
 
+![Eight ring cameras render one moving object from eight angles; a red identity box tracks the same object across every view that sees it.](assets/multiview_hero.gif)
+
+*multi-view: same object, 8 angles, one identity — eight ring cameras rendered by
+the pure-numpy rasterizer, with the object's analytic projected box drawn in every
+view that sees it. Reproduce: `uv run --with pillow python scripts/render_multiview_hero.py`.*
+
 ![Three MTMC camera stations with non-overlapping fields of view watch one object cross a corridor on a synced timeline; it hands off from camera 0 to 1 to 2, with blind-gap frames where no camera sees it.](docs/assets/hero_grid.gif)
 
 *One object, three cameras with **disjoint** views, one timeline — a green border

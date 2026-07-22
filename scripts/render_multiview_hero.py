@@ -48,8 +48,13 @@ OUT = FsPath(__file__).resolve().parents[1] / "assets" / "multiview_hero.gif"
 
 def build_scene():
     cams = CameraRig.ring(
-        n=N_CAMS, radius=RADIUS, height=HEIGHT, look_at=LOOK_AT,
-        width=RES, height_px=RES, focal=FOCAL,
+        n=N_CAMS,
+        radius=RADIUS,
+        height=HEIGHT,
+        look_at=LOOK_AT,
+        width=RES,
+        height_px=RES,
+        focal=FOCAL,
     )
     return (
         SceneBuilder(fps=FPS, num_frames=NUM_FRAMES)
@@ -88,7 +93,8 @@ def main() -> None:
             if in_view:
                 draw.rectangle(
                     [u - BOX_HALF, v - BOX_HALF, u + BOX_HALF, v + BOX_HALF],
-                    outline=OBJ_COLOR, width=3,
+                    outline=OBJ_COLOR,
+                    width=3,
                 )
                 draw.text((u - BOX_HALF, v - BOX_HALF - 12), ENTITY_ID, fill=OBJ_COLOR)
             draw.text((4, 4), f"cam {cam_id}", fill=(210, 210, 210))
@@ -99,8 +105,12 @@ def main() -> None:
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     frames[0].save(
-        OUT, save_all=True, append_images=frames[1:],
-        duration=GIF_MS, loop=0, optimize=True,
+        OUT,
+        save_all=True,
+        append_images=frames[1:],
+        duration=GIF_MS,
+        loop=0,
+        optimize=True,
     )
     size_kb = OUT.stat().st_size / 1024
     print(
