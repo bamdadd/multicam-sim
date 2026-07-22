@@ -19,7 +19,7 @@ from pathlib import Path as FsPath
 import numpy as np
 
 from multicam_sim.dsl import CameraRig, Path, SceneBuilder
-from multicam_sim.dsl.raster import RasterizerBackend
+from multicam_sim.dsl.raster import RasterizerBackend, RasterizerConfig
 from multicam_sim.manifest import build_manifest
 
 # --- fixed, reproducible parameters ---------------------------------------- #
@@ -38,7 +38,8 @@ PATH_END = (1.2, 0.5, 0.9)
 
 TILE = 128  # per-camera tile size in the grid (renders downscaled from RES)
 GRID_COLS, GRID_ROWS = 4, 2  # 2x4 = 8 cameras
-BOX_HALF = 16  # half-size (px, at RES) of the identity box drawn on the object
+OBJ_RADIUS = 0.12  # world-space object radius (bolder, readable sphere)
+BOX_HALF = 22  # half-size (px, at RES) of the identity box drawn on the object
 OBJ_COLOR = (255, 90, 70)  # one colour == one identity across all 8 views
 GIF_MS = 90
 
@@ -66,7 +67,7 @@ def main() -> None:
     t0 = time.time()
     scene = build_scene()
     manifest = build_manifest(scene)
-    backend = RasterizerBackend()
+    backend = RasterizerBackend(RasterizerConfig(point_radius=OBJ_RADIUS))
 
     # per (frame, cam): the object's projected uv + whether it is in view.
     obs: dict[tuple[int, int], tuple[float, float, bool]] = {}
