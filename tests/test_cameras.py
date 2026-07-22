@@ -106,3 +106,20 @@ def test_fov_deg_round_trips_independent_axes() -> None:
     fov_x, fov_y = intr.fov_deg()
     assert fov_x == pytest.approx(90.0)
     assert fov_y == pytest.approx(60.0)
+
+
+@pytest.mark.parametrize(
+    ("width", "height"),
+    [(0, 480), (640, 0), (-1, 480), (640, -4)],
+)
+def test_intrinsics_rejects_non_positive_size(width: int, height: int) -> None:
+    # A zero/negative image size silently breaks matrix(), in_image bounds and
+    # every downstream projection, so it must be rejected however Intrinsics is
+    # constructed — not just via from_fov.
+    with pytest.raises(ValueError, match="width and height must be > 0"):
+        Intrinsics(fx=100.0, fy=100.0, cx=320.0, cy=240.0, width=width, height=height)
+
+
+def test_intrinsics_direct_construction_still_works() -> None:
+    intr = Intrinsics.from_focal(100.0, 640, 480)
+    assert (intr.width, intr.height) == (640, 480)

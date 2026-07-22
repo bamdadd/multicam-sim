@@ -39,6 +39,13 @@ class Intrinsics(BaseModel):
     width: int
     height: int
 
+    @field_validator("width", "height")
+    @classmethod
+    def _check_positive_size(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("width and height must be > 0")
+        return value
+
     @classmethod
     def from_focal(cls, focal: float, width: int, height: int) -> Intrinsics:
         """Square-pixel intrinsics with principal point at the image centre."""
