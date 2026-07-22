@@ -73,6 +73,21 @@ scene = build_smoke_scene()          # 3 ring cameras, a moving point, one occlu
 manifest = write_manifest(scene, "scene.json")
 ```
 
+Because the manifest already carries every point's per-camera pixel and
+visibility, it exports straight to 2D training annotations — the sim doubles as a
+synthetic dataset generator. `write_coco` / `write_yolo` write COCO keypoint JSON
+and per-image YOLO(-pose) TXT labels, one image per `(camera, frame)`, entity ids
+as categories, and the COCO visibility flag (`2` visible / `1` occluded / `0`
+out of view) derived from `in_view` / `visible`:
+
+```python
+from multicam_sim import build_manifest, build_pose_smoke_scene, write_coco, write_yolo
+
+manifest = build_manifest(build_pose_smoke_scene())
+write_coco(manifest, "annotations.json")   # COCO keypoint-detection JSON
+write_yolo(manifest, "labels/")            # one YOLO .txt per image + classes.txt
+```
+
 A human pose is the same scene with a richer entity. It reuses the named-points
 schema with no fork: a person is one entity with 17 COCO joints and a skeleton,
 and every joint gets the same 3D / 2D / per-view occlusion labels as any point.

@@ -6,6 +6,18 @@ Camera convention mirrored from multicam-occlusion@59f4906 (see
 
 from __future__ import annotations
 
+from .annotations import (
+    CocoAnnotation,
+    CocoCategory,
+    CocoDataset,
+    CocoImage,
+    YoloDataset,
+    YoloLabel,
+    export_coco,
+    export_yolo,
+    write_coco,
+    write_yolo,
+)
 from .cameras import Camera, Intrinsics
 from .dropout import SensorDropout
 from .entities import Entity, EntityFrame
@@ -47,6 +59,10 @@ __all__ = [
     "Camera",
     "CameraManifest",
     "CameraTopology",
+    "CocoAnnotation",
+    "CocoCategory",
+    "CocoDataset",
+    "CocoImage",
     "Entity",
     "EntityFrame",
     "EntityManifest",
@@ -69,15 +85,21 @@ __all__ = [
     "Sphere",
     "Station",
     "TransitEdge",
+    "YoloDataset",
+    "YoloLabel",
     "build_manifest",
     "build_mtmc_scene",
     "silhouette_visible_fraction",
     "build_multi_entity_scene",
     "build_pose_smoke_scene",
     "build_smoke_scene",
+    "export_coco",
     "export_overlay",
+    "export_yolo",
     "validate_manifest",
+    "write_coco",
     "write_manifest",
+    "write_yolo",
 ]
 
 __version__ = "0.1.0"
