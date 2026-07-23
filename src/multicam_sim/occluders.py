@@ -27,6 +27,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from .geometry import (
     FloatArray,
     segment_intersects_aabb,
+    segment_intersects_finite_cylinder,
     segment_intersects_sphere,
 )
 
@@ -73,6 +74,46 @@ class Sphere(Occluder):
     def blocks_segment(self, a: FloatArray, b: FloatArray) -> bool:
         c = np.asarray(self.center, dtype=np.float64)
         return segment_intersects_sphere(a, b, c, self.radius)
+
+
+
+class Cylinder(Occluder):
+    """Finite solid cylinder: ``center``, unit ``axis``, ``radius``, ``height``."""
+
+    kind: Literal["cylinder"] = "cylinder"
+    center: list[float]
+    axis: list[float]
+    radius: float
+    height: float
+
+    @field_validator("center", "axis")
+    @classmethod
+    def _check_vec3(cls, value: list[float]) -> list[float]:
+        if len(value) != 3:
+            raise ValueError("must be a length-3 [x, y, z] vector")
+        return value
+
+    @field_validator("radius", "height")
+    @classmethod
+    def _check_positive(cls, value: float) -> float:
+        if value <= 0.0:
+            raise ValueError("cylinder radius and height must be > 0")
+        return value
+
+    @model_validator(mode="after")
+    def _normalize_axis(self) -> Cylinder:
+        axis = np.asarray(self.axis, dtype=np.float64)
+        norm = float(np.linalg.norm(axis))
+        if norm == 0.0:
+            raise ValueError("cylinder axis must be non-zero")
+        # Store a unit axis so serialised scenes stay consistent.
+        object.__setattr__(self, "axis", (axis / norm).tolist())
+        return self
+
+    def blocks_segment(self, a: FloatArray, b: FloatArray) -> bool:
+        c = np.asarray(self.center, dtype=np.float64)
+        u = np.asarray(self.axis, dtype=np.float64)
+        return segment_intersects_finite_cylinder(a, b, c, u, self.radius, self.height)
 
 
 class HandKeyframe(BaseModel):
@@ -151,4 +192,4 @@ class HandOccluder(Occluder):
 
 
 #: Discriminated union for scene (de)serialisation.
-OccluderUnion = Annotated[Box | Sphere | HandOccluder, Field(discriminator="kind")]
+OccluderUnion = Annotated[Box | Sphere | Cylinder | HandOccluder, Field(discriminator="kind")]

@@ -154,3 +154,64 @@ def segment_intersects_aabb(
         if t_min > t_max:
             return False
     return True
+
+
+def segment_intersects_finite_cylinder(
+    a: FloatArray,
+    b: FloatArray,
+    centre: FloatArray,
+    axis: FloatArray,
+    radius: float,
+    height: float,
+) -> bool:
+    """Does the closed segment ``a->b`` intersect a finite solid cylinder?
+
+    The cylinder is centred at ``centre``, extends ``±height/2`` along unit
+    ``axis``, and has the given ``radius``. Intersection is the infinite-cylinder
+    quadratic clipped to the height band (solid interior included).
+    """
+    axis_norm = float(np.linalg.norm(axis))
+    if axis_norm == 0.0:
+        raise ValueError("cylinder axis must be non-zero")
+    u = axis / axis_norm
+    d = b - a
+    f = a - centre
+    d_dot = float(d @ u)
+    f_dot = float(f @ u)
+    d_perp = d - d_dot * u
+    f_perp = f - f_dot * u
+    aa = float(d_perp @ d_perp)
+    bb = 2.0 * float(f_perp @ d_perp)
+    cc = float(f_perp @ f_perp) - radius * radius
+    half_h = height * 0.5
+
+    def _height_overlaps(t0: float, t1: float) -> bool:
+        h0 = f_dot + t0 * d_dot
+        h1 = f_dot + t1 * d_dot
+        lo, hi = (h0, h1) if h0 <= h1 else (h1, h0)
+        return not (hi < -half_h or lo > half_h)
+
+    if aa < 1e-15:
+        # Segment parallel to axis: radial distance is constant.
+        if cc > 0.0:
+            return False
+        return _height_overlaps(0.0, 1.0)
+
+    disc = bb * bb - 4.0 * aa * cc
+    if disc < 0.0:
+        # No surface crossing; still inside if radial distance stays ≤ radius.
+        if cc > 0.0:
+            return False
+        return _height_overlaps(0.0, 1.0)
+
+    sq = float(np.sqrt(disc))
+    t_lo = (-bb - sq) / (2.0 * aa)
+    t_hi = (-bb + sq) / (2.0 * aa)
+    if t_lo > t_hi:
+        t_lo, t_hi = t_hi, t_lo
+    enter = max(0.0, t_lo)
+    exit_ = min(1.0, t_hi)
+    if enter > exit_:
+        return False
+    return _height_overlaps(enter, exit_)
+
