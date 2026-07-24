@@ -170,6 +170,15 @@ class Camera(BaseModel):
         """Camera centre ``C = -R^T @ t`` in world coordinates."""
         return camera_centre(self.rotation(), self.translation())
 
+    def forward(self) -> FloatArray:
+        """World-space unit viewing direction.
+
+        ``R``'s rows are the camera axes in world coordinates in the order
+        ``[right, down, forward]`` (OpenCV, +z forward), so the forward axis is
+        the third row — already unit length for an orthonormal ``R``.
+        """
+        return np.asarray(self.rotation()[2], dtype=np.float64)
+
     def projection_matrix(self) -> FloatArray:
         """The ``3x4`` matrix ``P = K [R | t]``."""
         return projection_matrix(self.intrinsics.matrix(), self.rotation(), self.translation())

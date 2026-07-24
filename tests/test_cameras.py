@@ -123,3 +123,20 @@ def test_intrinsics_rejects_non_positive_size(width: int, height: int) -> None:
 def test_intrinsics_direct_construction_still_works() -> None:
     intr = Intrinsics.from_focal(100.0, 640, 480)
     assert (intr.width, intr.height) == (640, 480)
+
+
+def test_camera_forward_is_unit_length() -> None:
+    intr = Intrinsics.from_focal(100.0, 640, 480)
+    eye = np.array([1.0, 2.0, 3.0])
+    target = np.array([4.0, 0.0, 1.0])
+    cam = Camera.look_at(0, intr, eye, target)
+    assert np.linalg.norm(cam.forward()) == pytest.approx(1.0)
+
+
+def test_camera_forward_points_from_eye_to_target() -> None:
+    intr = Intrinsics.from_focal(100.0, 640, 480)
+    eye = np.array([1.0, 2.0, 3.0])
+    target = np.array([4.0, 0.0, 1.0])
+    cam = Camera.look_at(0, intr, eye, target)
+    expected = (target - eye) / np.linalg.norm(target - eye)
+    np.testing.assert_allclose(cam.forward(), expected, atol=1e-9)
