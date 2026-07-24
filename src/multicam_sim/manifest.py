@@ -391,6 +391,40 @@ class Manifest(BaseModel):
         optional fields omitted, full float precision, strict (finite) JSON."""
         return self.model_dump_json(indent=2, exclude_none=True)
 
+    def coverage_summary(self) -> dict[int, tuple[float, float]]:
+        """Per-camera coverage across all (entity, frame, point) observations.
+
+        Maps each camera id to ``(visible_fraction, mean_occ_frac)``:
+
+        - ``visible_fraction`` — fraction of that camera's observations with
+          ``visible == True``, in ``[0, 1]`` (``0.0`` if it has no observations).
+        - ``mean_occ_frac`` — mean of the non-``None`` ``occ_frac`` values
+          (``0.0`` when none are recorded).
+
+        Pure read-only aggregation; numpy-free.
+        """
+        counts: dict[int, int] = {}
+        visible_counts: dict[int, int] = {}
+        occ_sums: dict[int, float] = {}
+        occ_counts: dict[int, int] = {}
+        for entity in self.entities:
+            for frame in entity.frames:
+                for point in frame.points.values():
+                    for obs in point.per_cam:
+                        counts[obs.cam] = counts.get(obs.cam, 0) + 1
+                        if obs.visible:
+                            visible_counts[obs.cam] = visible_counts.get(obs.cam, 0) + 1
+                        if obs.occ_frac is not None:
+                            occ_sums[obs.cam] = occ_sums.get(obs.cam, 0.0) + obs.occ_frac
+                            occ_counts[obs.cam] = occ_counts.get(obs.cam, 0) + 1
+        summary: dict[int, tuple[float, float]] = {}
+        for cam, total in counts.items():
+            visible_fraction = visible_counts.get(cam, 0) / total
+            occ_n = occ_counts.get(cam, 0)
+            mean_occ = occ_sums.get(cam, 0.0) / occ_n if occ_n else 0.0
+            summary[cam] = (visible_fraction, mean_occ)
+        return summary
+
 
 # --------------------------------------------------------------------------- #
 # Compute (pure projection + boolean visibility; no renderer).
