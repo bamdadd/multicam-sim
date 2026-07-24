@@ -214,4 +214,3 @@ def segment_intersects_finite_cylinder(
     if enter > exit_:
         return False
     return _height_overlaps(enter, exit_)
-

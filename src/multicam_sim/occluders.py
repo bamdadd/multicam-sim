@@ -76,7 +76,6 @@ class Sphere(Occluder):
         return segment_intersects_sphere(a, b, c, self.radius)
 
 
-
 class Cylinder(Occluder):
     """Finite solid cylinder: ``center``, unit ``axis``, ``radius``, ``height``."""
 
