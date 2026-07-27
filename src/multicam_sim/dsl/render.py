@@ -114,6 +114,11 @@ class PyrenderBackend:
     solids, from the chosen camera. Requires the ``render`` extra; importing this
     class is cheap, but :meth:`render` lazily imports ``pyrender``/``trimesh`` and
     raises a clear error if the extra is absent.
+
+    :meth:`render` also calls :func:`multicam_sim.dsl.depth.configure_headless`
+    before that import, so a display-less box renders instead of dying with
+    ``NoSuchDisplayException``. It no-ops when ``DISPLAY`` or an explicit
+    ``PYOPENGL_PLATFORM`` is already set, so a desktop is unaffected.
     """
 
     def __init__(self, *, point_radius: float = 0.05, bg: tuple[float, float, float] = (0, 0, 0)):
@@ -121,6 +126,11 @@ class PyrenderBackend:
         self.bg = bg
 
     def render(self, scene: Scene, camera_id: int, frame: int) -> FloatArray:
+        # Imported here, not at module scope: `depth` imports this module, and the
+        # platform must be chosen before the first pyrender import either way.
+        from .depth import configure_headless
+
+        configure_headless()
         pyrender, _ = _import_pyrender("PyrenderBackend")
         pr_scene, intr = _build_pyrender_scene(
             scene,
