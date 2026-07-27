@@ -187,18 +187,23 @@ Both are compatible with this project's Apache-2.0. No differentiator.
 friends — whose licenses are not enumerated in the `dist-info`. A vendoring
 review would need to look at the Open3D source tree, not the wheel.)*
 
-## Known issue this evaluation surfaced
+## Known issue this evaluation surfaced (fixed in #36)
 
-`PyrenderBackend.render` (`src/multicam_sim/dsl/render.py`) **cannot render
-headless today**: it takes pyglet's default platform and dies with
+`PyrenderBackend.render` (`src/multicam_sim/dsl/render.py`) **could not render
+headless**: it took pyglet's default platform and died with
 `NoSuchDisplayException`. Reproduced on pristine `main` with the `render` extra
 installed — `tests/test_render.py::test_render_produces_an_image_when_pyrender_present`
-fails on this box. CI never installs the extra, so CI is unaffected and green.
+failed on this box. CI never installs the extra, so CI was unaffected and green.
 
-This is left alone deliberately (out of scope for a research issue, and the fix is
-a behaviour change to the colour path). The remedy is the same
-`configure_headless()` the depth backend uses; happy to do it in a follow-up if
-wanted.
+The remedy was the same `configure_headless()` the depth backend uses, and
+`render()` now calls it itself before importing pyrender.
+`test_render_configures_headless_before_importing_pyrender` guards that ordering
+(no extra needed), and `test_render_headless_smoke_with_no_display` renders a
+frame with `DISPLAY` unset, in a subprocess like the depth smoke.
+
+The in-process smoke still needs a display or an exported `PYOPENGL_PLATFORM`:
+`importorskip` imports pyrender before `render()` is ever called, so
+`configure_headless()` refuses — by design — with "PyOpenGL is already imported".
 
 ## Reproducing
 

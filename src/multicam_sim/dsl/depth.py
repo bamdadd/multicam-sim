@@ -9,8 +9,9 @@ Why a separate module from :mod:`multicam_sim.dsl.render`:
 
 * ``RendererBackend`` returns colour pixels; depth is a different return shape, so
   :class:`DepthBackend` is its own Protocol (open/closed, same as the colour side).
-* headless GL needs a platform decision (:func:`configure_headless`) that the
-  colour path deliberately does not make for you.
+* the headless platform decision (:func:`configure_headless`) lives here, because
+  depth was the first path to need it; both backends call it for you now, so the
+  colour path in :mod:`multicam_sim.dsl.render` imports it back from this module.
 
 Depth semantics (measured, see ``docs/renderer-eval.md``): the returned buffer is
 **camera-space z** in scene units — the perpendicular distance to the image plane,
@@ -48,7 +49,8 @@ def configure_headless(platform: str = "osmesa") -> str:
     render on its own). Returns the platform in force ("" == PyOpenGL's default).
 
     Must be called *before* pyrender is first imported — PyOpenGL reads this at
-    import time. :meth:`PyrenderDepthBackend.render_depth` calls it for you.
+    import time. :meth:`PyrenderDepthBackend.render_depth` and
+    :meth:`multicam_sim.dsl.render.PyrenderBackend.render` both call it for you.
 
     ``osmesa`` (software rasteriser, needs the ``libosmesa6`` system package) is
     the default because it needs no GPU; ``egl`` is the faster choice where a GPU
