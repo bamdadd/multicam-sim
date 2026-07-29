@@ -190,5 +190,76 @@ class HandOccluder(Occluder):
         )
 
 
+class PathOccluder(Occluder):
+    """A moving solid whose centre follows typed per-frame keyframes.
+
+    The trajectory is sampled from the movement DSL (:mod:`multicam_sim.dsl.motion`)
+    at build time, so the stored scene is frame-resolved and the manifest's
+    sightline tests only ever see a static Box/Sphere (via :meth:`at_frame`).
+    """
+
+    kind: Literal["path"] = "path"
+    shape: Literal["sphere", "box", "plane"] = "sphere"
+    size: float
+    coverage: float = 1.0
+    keyframes: list[HandKeyframe]
+
+    @field_validator("size", "coverage")
+    @classmethod
+    def _check_positive(cls, value: float) -> float:
+        if value <= 0.0:
+            raise ValueError("path occluder size and coverage must be > 0")
+        return value
+
+    @model_validator(mode="after")
+    def _check_keyframes(self) -> PathOccluder:
+        if not self.keyframes:
+            raise ValueError("path occluder needs at least one keyframe")
+        frames = [k.frame for k in self.keyframes]
+        if frames != sorted(frames):
+            raise ValueError("path occluder keyframes must be sorted by frame ascending")
+        if len(frames) != len(set(frames)):
+            raise ValueError("path occluder keyframe frames must be unique")
+        return self
+
+    def center_at(self, frame: int) -> FloatArray:
+        """The occluder centre at ``frame`` (piecewise-linear, endpoint-clamped)."""
+        keys = self.keyframes
+        if frame <= keys[0].frame:
+            return np.asarray(keys[0].center, dtype=np.float64)
+        if frame >= keys[-1].frame:
+            return np.asarray(keys[-1].center, dtype=np.float64)
+        for lo, hi in zip(keys, keys[1:], strict=False):
+            if lo.frame <= frame <= hi.frame:
+                span = hi.frame - lo.frame
+                t = (frame - lo.frame) / span
+                a = np.asarray(lo.center, dtype=np.float64)
+                b = np.asarray(hi.center, dtype=np.float64)
+                return a + t * (b - a)
+        raise AssertionError("unreachable: frame lies within the keyframe range")
+
+    def _solid(self, center: FloatArray) -> Occluder:
+        extent = self.size * self.coverage
+        if self.shape == "sphere":
+            return Sphere(center=center.tolist(), radius=extent)
+        if self.shape == "box":
+            return Box(center=center.tolist(), half_extents=[extent, extent, extent])
+        # plane: a thin slab oriented flat in z (finite plane approximation)
+        return Box(center=center.tolist(), half_extents=[extent, extent, extent * 0.05])
+
+    def at_frame(self, frame: int) -> Occluder:
+        """The static solid this path occluder presents at ``frame``."""
+        return self._solid(self.center_at(frame))
+
+    def blocks_segment(self, a: FloatArray, b: FloatArray) -> bool:
+        raise NotImplementedError(
+            "PathOccluder is time-varying; resolve it with at_frame(frame) and "
+            "test the returned static solid's blocks_segment"
+        )
+
+
 #: Discriminated union for scene (de)serialisation.
-OccluderUnion = Annotated[Box | Sphere | Cylinder | HandOccluder, Field(discriminator="kind")]
+OccluderUnion = Annotated[
+    Box | Sphere | Cylinder | HandOccluder | PathOccluder,
+    Field(discriminator="kind"),
+]

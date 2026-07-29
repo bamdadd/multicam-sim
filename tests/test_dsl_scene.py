@@ -219,3 +219,47 @@ def test_occlusion_rejects_both_frames_and_seconds_windows() -> None:
         Occlusion.sphere(size=0.15).during((3, 7)).during_seconds(0.5, 1.5)
     with pytest.raises(ValueError):
         Occlusion.sphere(size=0.15).during_seconds(0.5, 1.5).during((3, 7))
+
+
+def test_distractor_entity_appears_without_changing_target() -> None:
+    """A distractor is emitted as its own entity and leaves the target's
+    ground truth and per-camera visibility untouched."""
+    cameras = CameraRig.ring(
+        n=3,
+        radius=4.0,
+        height=1.5,
+        look_at=(0.0, 0.0, 0.5),
+        focal=800.0,
+        width=640,
+        height_px=480,
+    )
+    target_path = Path.linear((0.0, -0.6, 0.5), (0.0, 0.6, 0.5))
+    distractor_path = Path.linear((0.5, -0.6, 0.5), (0.5, 0.6, 0.5))
+
+    with_distractor = (
+        SceneBuilder(fps=30.0, num_frames=11)
+        .cameras(cameras)
+        .entity("obj", target_path)
+        .distractor("noise", distractor_path)
+        .build()
+    )
+    without = (
+        SceneBuilder(fps=30.0, num_frames=11).cameras(cameras).entity("obj", target_path).build()
+    )
+
+    m_with = build_manifest(with_distractor)
+    m_without = build_manifest(without)
+
+    ids = {e.id for e in m_with.entities}
+    assert "obj" in ids
+    assert "noise" in ids
+
+    target_with = next(e for e in m_with.entities if e.id == "obj")
+    target_without = next(e for e in m_without.entities if e.id == "obj")
+    assert target_with == target_without
+    for fr_w, fr_wo in zip(target_with.frames, target_without.frames, strict=False):
+        assert fr_w.points["center"].xyz_gt == fr_wo.points["center"].xyz_gt
+        for o_w, o_wo in zip(
+            fr_w.points["center"].per_cam, fr_wo.points["center"].per_cam, strict=False
+        ):
+            assert o_w.visible == o_wo.visible

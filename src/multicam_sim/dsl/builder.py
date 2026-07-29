@@ -52,6 +52,7 @@ class SceneBuilder:
         self.num_frames = num_frames
         self._cameras: list[Camera] = []
         self._entities: list[_EntitySpec] = []
+        self._distractors: list[_EntitySpec] = []
         self._occlusions: list[Occlusion] = []
         self._hand_sweeps: list[HandSweep] = []
         self._attachments: list[_AttachmentSpec] = []
@@ -71,6 +72,18 @@ class SceneBuilder:
     ) -> SceneBuilder:
         """Add a moving entity whose motion is a compiled :class:`Path`."""
         self._entities.append(_EntitySpec(id=id, path=path, name=name, edges=edges))
+        return self
+
+    def distractor(
+        self,
+        id: str,
+        path: PathUnion,
+        *,
+        name: str = "center",
+    ) -> SceneBuilder:
+        """Add a non-target entity that appears in the manifest but never affects
+        the visibility or ground truth of the primary entities."""
+        self._distractors.append(_EntitySpec(id=id, path=path, name=name, edges=None))
         return self
 
     def occlude(self, occlusion: Occlusion) -> SceneBuilder:
@@ -126,9 +139,10 @@ class SceneBuilder:
         if not self._entities:
             raise ValueError("no entities; call .entity(...)")
 
+        specs = self._entities + self._distractors
         entities: list[Entity] = []
         frames_by_id: dict[str, list[EntityFrame]] = {}
-        for spec in self._entities:
+        for spec in specs:
             frames = spec.path.compile_frames(self.fps, self.num_frames, name=spec.name)
             frames_by_id[spec.id] = frames
             entities.append(Entity(id=spec.id, edges=spec.edges, frames=frames))
@@ -182,7 +196,14 @@ class SceneBuilder:
             target_id = occ.entity if occ.entity is not None else self._entities[0].id
             if target_id not in frames_by_id:
                 raise ValueError(f"occlusion targets unknown entity {target_id!r}")
-            occluders.append(occ.realize(self._cameras, frames_by_id[target_id]))
+            occluders.append(
+                occ.realize(
+                    self._cameras,
+                    frames_by_id[target_id],
+                    fps=self.fps,
+                    num_frames=self.num_frames,
+                )
+            )
 
         for sweep in self._hand_sweeps:
             if sweep.frames is not None and sweep.seconds is not None:
@@ -195,7 +216,14 @@ class SceneBuilder:
             target_id = sweep.entity if sweep.entity is not None else self._entities[0].id
             if target_id not in frames_by_id:
                 raise ValueError(f"hand sweep targets unknown entity {target_id!r}")
-            occluders.append(sweep.realize(self._cameras, frames_by_id[target_id]))
+            occluders.append(
+                sweep.realize(
+                    self._cameras,
+                    frames_by_id[target_id],
+                    fps=self.fps,
+                    num_frames=self.num_frames,
+                )
+            )
 
         possession = (
             PossessionTimeline(segments=possession_segments) if possession_segments else None
