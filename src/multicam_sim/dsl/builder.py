@@ -14,18 +14,31 @@ from ..entities import Entity, EntityFrame
 from ..occluders import OccluderUnion
 from ..possession import PossessionSegment, PossessionTimeline
 from ..scene import Scene
+from .behavior import Behavior, PathBehavior
 from .motion import PathUnion
 from .occlusion import HandSweep, Occlusion
 
 Vec3 = tuple[float, float, float]
 
+#: What ``entity`` / ``distractor`` accept: a raw motion ``Path`` (wrapped in a
+#: :class:`~multicam_sim.dsl.behavior.PathBehavior` for backward compatibility)
+#: or any :class:`~multicam_sim.dsl.behavior.Behavior` policy. Open-closed: the
+#: builder only ever calls ``.rollout(...)``.
+Motion = PathUnion | Behavior
+
+
+def _as_behavior(motion: Motion) -> Behavior:
+    """Normalise a ``Path`` or a ``Behavior`` to a ``Behavior`` (open-closed)."""
+    return motion if isinstance(motion, Behavior) else PathBehavior(motion)
+
 
 @dataclass(frozen=True)
 class _EntitySpec:
     id: str
-    path: PathUnion
+    behavior: Behavior
     name: str
     edges: list[tuple[str, str]] | None
+    seed: int
 
 
 @dataclass(frozen=True)
@@ -65,25 +78,37 @@ class SceneBuilder:
     def entity(
         self,
         id: str,
-        path: PathUnion,
+        path: Motion,
         *,
         name: str = "center",
         edges: list[tuple[str, str]] | None = None,
+        seed: int = 0,
     ) -> SceneBuilder:
-        """Add a moving entity whose motion is a compiled :class:`Path`."""
-        self._entities.append(_EntitySpec(id=id, path=path, name=name, edges=edges))
+        """Add a moving entity whose motion is a compiled :class:`Path` or a
+        :class:`~multicam_sim.dsl.behavior.Behavior` policy.
+
+        ``seed`` is threaded into the behaviour's ``rollout`` so a stochastic
+        behaviour (e.g. a jittered :class:`WaypointBehavior`) is deterministic and
+        can be swept over >= 3 seeds; a plain path ignores it.
+        """
+        self._entities.append(
+            _EntitySpec(id=id, behavior=_as_behavior(path), name=name, edges=edges, seed=seed)
+        )
         return self
 
     def distractor(
         self,
         id: str,
-        path: PathUnion,
+        path: Motion,
         *,
         name: str = "center",
+        seed: int = 0,
     ) -> SceneBuilder:
         """Add a non-target entity that appears in the manifest but never affects
         the visibility or ground truth of the primary entities."""
-        self._distractors.append(_EntitySpec(id=id, path=path, name=name, edges=None))
+        self._distractors.append(
+            _EntitySpec(id=id, behavior=_as_behavior(path), name=name, edges=None, seed=seed)
+        )
         return self
 
     def occlude(self, occlusion: Occlusion) -> SceneBuilder:
@@ -143,7 +168,9 @@ class SceneBuilder:
         entities: list[Entity] = []
         frames_by_id: dict[str, list[EntityFrame]] = {}
         for spec in specs:
-            frames = spec.path.compile_frames(self.fps, self.num_frames, name=spec.name)
+            frames = spec.behavior.rollout(
+                self.fps, self.num_frames, seed=spec.seed, name=spec.name
+            )
             frames_by_id[spec.id] = frames
             entities.append(Entity(id=spec.id, edges=spec.edges, frames=frames))
 
