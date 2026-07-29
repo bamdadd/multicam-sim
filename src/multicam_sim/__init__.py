@@ -51,6 +51,7 @@ from .pose import (
     PoseTrajectory,
     Skeleton,
 )
+from .possession import PossessionSegment, PossessionTimeline, write_possession_json
 from .scene import Scene
 from .smoke import build_multi_entity_scene, build_pose_smoke_scene, build_smoke_scene
 from .topology import CameraTopology, Station, TransitEdge
@@ -89,6 +90,8 @@ __all__ = [
     "PointObs",
     "PoseFrame",
     "PoseTrajectory",
+    "PossessionSegment",
+    "PossessionTimeline",
     "Scene",
     "SensorDropout",
     "Skeleton",
@@ -112,6 +115,7 @@ __all__ = [
     "write_coco",
     "write_group_json",
     "write_manifest",
+    "write_possession_json",
     "write_yolo",
 ]
 

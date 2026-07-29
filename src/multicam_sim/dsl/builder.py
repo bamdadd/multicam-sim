@@ -12,9 +12,12 @@ from dataclasses import dataclass
 from ..cameras import Camera
 from ..entities import Entity, EntityFrame
 from ..occluders import OccluderUnion
+from ..possession import PossessionSegment, PossessionTimeline
 from ..scene import Scene
 from .motion import PathUnion
 from .occlusion import HandSweep, Occlusion
+
+Vec3 = tuple[float, float, float]
 
 
 @dataclass(frozen=True)
@@ -23,6 +26,17 @@ class _EntitySpec:
     path: PathUnion
     name: str
     edges: list[tuple[str, str]] | None
+
+
+@dataclass(frozen=True)
+class _AttachmentSpec:
+    object_id: str
+    holder_id: str
+    start: int
+    end: int
+    offset: Vec3
+    holder_point: str
+    object_point: str
 
 
 class SceneBuilder:
@@ -40,6 +54,7 @@ class SceneBuilder:
         self._entities: list[_EntitySpec] = []
         self._occlusions: list[Occlusion] = []
         self._hand_sweeps: list[HandSweep] = []
+        self._attachments: list[_AttachmentSpec] = []
 
     def cameras(self, cameras: list[Camera]) -> SceneBuilder:
         """Set the camera array (e.g. from :class:`multicam_sim.dsl.CameraRig`)."""
@@ -68,6 +83,42 @@ class SceneBuilder:
         self._hand_sweeps.append(sweep)
         return self
 
+    def attach(
+        self,
+        object_id: str,
+        holder_id: str,
+        start: int,
+        end: int,
+        *,
+        offset: Vec3 = (0.0, 0.0, 0.0),
+        holder_point: str = "center",
+        object_point: str = "center",
+    ) -> SceneBuilder:
+        """Attach ``object_id`` to ``holder_id`` over ``[start, end)`` frames.
+
+        At build time the object's ``object_point`` is overwritten by the
+        holder's ``holder_point`` plus ``offset`` for every frame in the
+        half-open interval; the object detaches at ``end`` and resumes the
+        frames defined by its own path. A possession-GT sidecar recording the
+        attached interval is baked into the returned :class:`Scene`.
+        """
+        if start < 0 or end > self.num_frames or end <= start:
+            raise ValueError(
+                f"invalid attachment window [{start}, {end}) for num_frames={self.num_frames}"
+            )
+        self._attachments.append(
+            _AttachmentSpec(
+                object_id=object_id,
+                holder_id=holder_id,
+                start=start,
+                end=end,
+                offset=offset,
+                holder_point=holder_point,
+                object_point=object_point,
+            )
+        )
+        return self
+
     def build(self) -> Scene:
         """Compile the DSL into a :class:`Scene` (cameras, entities, occluders)."""
         if not self._cameras:
@@ -81,6 +132,43 @@ class SceneBuilder:
             frames = spec.path.compile_frames(self.fps, self.num_frames, name=spec.name)
             frames_by_id[spec.id] = frames
             entities.append(Entity(id=spec.id, edges=spec.edges, frames=frames))
+
+        possession_segments: list[PossessionSegment] = []
+        for att in self._attachments:
+            if att.object_id not in frames_by_id:
+                raise ValueError(f"attachment references unknown object {att.object_id!r}")
+            if att.holder_id not in frames_by_id:
+                raise ValueError(f"attachment references unknown holder {att.holder_id!r}")
+
+            object_frames = frames_by_id[att.object_id]
+            holder_frames = frames_by_id[att.holder_id]
+            holder_by_frame = {f.frame: f.points for f in holder_frames}
+
+            for f in range(att.start, att.end):
+                holder_points = holder_by_frame[f]
+                if att.holder_point not in holder_points:
+                    raise ValueError(
+                        f"holder {att.holder_id!r} has no point {att.holder_point!r} at frame {f}"
+                    )
+                hx, hy, hz = holder_points[att.holder_point]
+                ox, oy, oz = att.offset
+                carried = [hx + ox, hy + oy, hz + oz]
+
+                object_frame = object_frames[f]
+                if att.object_point not in object_frame.points:
+                    raise ValueError(
+                        f"object {att.object_id!r} has no point {att.object_point!r} at frame {f}"
+                    )
+                object_frame.points[att.object_point] = carried
+
+            possession_segments.append(
+                PossessionSegment(
+                    object_id=att.object_id,
+                    holder_id=att.holder_id,
+                    start_frame=att.start,
+                    end_frame=att.end,
+                )
+            )
 
         occluders: list[OccluderUnion] = []
         for occ in self._occlusions:
@@ -109,10 +197,15 @@ class SceneBuilder:
                 raise ValueError(f"hand sweep targets unknown entity {target_id!r}")
             occluders.append(sweep.realize(self._cameras, frames_by_id[target_id]))
 
+        possession = (
+            PossessionTimeline(segments=possession_segments) if possession_segments else None
+        )
+
         return Scene(
             fps=self.fps,
             num_frames=self.num_frames,
             cameras=self._cameras,
             entities=entities,
             occluders=occluders,
+            possession=possession,
         )
