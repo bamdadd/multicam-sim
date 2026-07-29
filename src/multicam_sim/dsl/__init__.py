@@ -10,6 +10,7 @@ optional extra and importing it must never be required to build a scene.
 from __future__ import annotations
 
 from ..noise import CalibrationDrift, NoiseModel, PixelNoise
+from .behavior import Behavior, PathBehavior, WaypointBehavior
 from .builder import SceneBuilder
 from .motion import (
     BezierPath,
@@ -25,6 +26,7 @@ from .occlusion import HandSweep, Occlusion
 from .rig import CameraRig, PoseOverride, StationView
 
 __all__ = [
+    "Behavior",
     "BezierPath",
     "CalibrationDrift",
     "CameraRig",
@@ -34,6 +36,7 @@ __all__ = [
     "NoiseModel",
     "Occlusion",
     "Path",
+    "PathBehavior",
     "PathUnion",
     "PixelNoise",
     "PoseOverride",
@@ -41,5 +44,6 @@ __all__ = [
     "SceneBuilder",
     "SequencePath",
     "StationView",
+    "WaypointBehavior",
     "WaypointPath",
 ]
