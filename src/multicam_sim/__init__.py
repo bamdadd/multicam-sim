@@ -34,7 +34,7 @@ from .manifest import (
 )
 from .mtmc import build_mtmc_scene
 from .noise import CalibrationDrift, NoiseModel, PixelNoise
-from .occluders import Box, Cylinder, HandKeyframe, HandOccluder, Occluder, Sphere
+from .occluders import Box, Cylinder, HandKeyframe, HandOccluder, Occluder, PathOccluder, Sphere
 from .overlay import export_overlay
 from .pose import (
     COCO17_EDGES,
@@ -75,6 +75,7 @@ __all__ = [
     "MeshBackend",
     "NoiseModel",
     "Occluder",
+    "PathOccluder",
     "PerCamObs",
     "PixelNoise",
     "PointObs",

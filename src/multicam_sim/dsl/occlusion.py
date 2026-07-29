@@ -27,7 +27,8 @@ from pydantic import BaseModel, ConfigDict
 
 from ..cameras import Camera
 from ..entities import EntityFrame
-from ..occluders import Box, HandKeyframe, HandOccluder, OccluderUnion, Sphere
+from ..occluders import Box, HandKeyframe, HandOccluder, OccluderUnion, PathOccluder, Sphere
+from .motion import PathUnion
 
 Vec3 = tuple[float, float, float]
 
@@ -52,6 +53,7 @@ class Occlusion(BaseModel):
     seconds: tuple[float, float] | None = None
     entity: str | None = None  # default: the scene's first entity
     point_name: str = "center"
+    path: PathUnion | None = None  # if set, the occluder moves along this path
 
     # -- factories --------------------------------------------------------- #
     @classmethod
@@ -74,6 +76,20 @@ class Occlusion(BaseModel):
         if size <= 0.0:
             raise ValueError("occlusion size must be > 0")
         return cls(shape="plane", size=size, coverage=coverage)
+
+    @classmethod
+    def moving_sphere(cls, size: float, path: PathUnion, coverage: float = 1.0) -> Occlusion:
+        """A sphere of ``size`` that moves along ``path`` (sampled per frame)."""
+        if size <= 0.0:
+            raise ValueError("occlusion size must be > 0")
+        return cls(shape="sphere", size=size, coverage=coverage, path=path)
+
+    @classmethod
+    def moving_box(cls, size: float, path: PathUnion, coverage: float = 1.0) -> Occlusion:
+        """A box of ``size`` that moves along ``path`` (sampled per frame)."""
+        if size <= 0.0:
+            raise ValueError("occlusion size must be > 0")
+        return cls(shape="box", size=size, coverage=coverage, path=path)
 
     # -- fluent schedule --------------------------------------------------- #
     def blocks(self, camera: int) -> Occlusion:
@@ -112,13 +128,34 @@ class Occlusion(BaseModel):
         return self.model_copy(update={"coverage": coverage})
 
     # -- compile ----------------------------------------------------------- #
-    def realize(self, cameras: list[Camera], entity_frames: list[EntityFrame]) -> OccluderUnion:
+    def realize(
+        self,
+        cameras: list[Camera],
+        entity_frames: list[EntityFrame],
+        fps: float | None = None,
+        num_frames: int | None = None,
+    ) -> OccluderUnion:
         """Place real occluder geometry on the target camera's sightline.
 
         Sits the solid a small ``offset`` fraction from the entity point toward
         the camera centre, at the middle frame of the window, so the manifest
-        then computes ``visible`` geometrically.
+        then computes ``visible`` geometrically. When ``path`` is set, the
+        occluder is instead sampled per-frame from the movement DSL path.
         """
+        if self.path is not None:
+            if fps is None or num_frames is None:
+                raise ValueError("moving occlusion requires fps and num_frames to sample the path")
+            if self.camera is not None and not 0 <= self.camera < len(cameras):
+                raise ValueError(f"camera {self.camera} out of range")
+            sampled = self.path.compile_frames(fps, num_frames, name="center")
+            keyframes = [HandKeyframe(frame=f.frame, center=f.points["center"]) for f in sampled]
+            return PathOccluder(
+                shape=self.shape,
+                size=self.size,
+                coverage=self.coverage,
+                keyframes=keyframes,
+            )
+
         if self.camera is None:
             raise ValueError("occlusion has no target camera; call .blocks(camera=...)")
         if self.frames is None:
@@ -215,8 +252,15 @@ class HandSweep(BaseModel):
         """Switch to ``approach`` mode: enter and STOP centred (monotone curve)."""
         return self.model_copy(update={"mode": "approach"})
 
-    def realize(self, cameras: list[Camera], entity_frames: list[EntityFrame]) -> HandOccluder:
+    def realize(
+        self,
+        cameras: list[Camera],
+        entity_frames: list[EntityFrame],
+        fps: float | None = None,
+        num_frames: int | None = None,
+    ) -> HandOccluder:
         """Compile to a :class:`HandOccluder` with deterministic keyframes."""
+        del fps, num_frames  # hand sweep timing is frame-based, not wall-clock
         if self.camera is None:
             raise ValueError("hand sweep has no target camera; call .blocks(camera=...)")
         if self.frames is None:
