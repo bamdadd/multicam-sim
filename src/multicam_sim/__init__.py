@@ -21,6 +21,13 @@ from .annotations import (
 from .cameras import Camera, Intrinsics
 from .dropout import SensorDropout
 from .entities import Entity, EntityFrame
+from .groups import (
+    GroupFrameMembership,
+    GroupMembership,
+    build_group_formation_scene,
+    compute_group_membership,
+    write_group_json,
+)
 from .manifest import (
     AssumedCalibration,
     CameraManifest,
@@ -68,6 +75,8 @@ __all__ = [
     "EntityFrame",
     "EntityManifest",
     "FrameObs",
+    "GroupFrameMembership",
+    "GroupMembership",
     "HandKeyframe",
     "HandOccluder",
     "Intrinsics",
@@ -88,17 +97,20 @@ __all__ = [
     "TransitEdge",
     "YoloDataset",
     "YoloLabel",
+    "build_group_formation_scene",
     "build_manifest",
     "build_mtmc_scene",
     "silhouette_visible_fraction",
     "build_multi_entity_scene",
     "build_pose_smoke_scene",
     "build_smoke_scene",
+    "compute_group_membership",
     "export_coco",
     "export_overlay",
     "export_yolo",
     "validate_manifest",
     "write_coco",
+    "write_group_json",
     "write_manifest",
     "write_yolo",
 ]
