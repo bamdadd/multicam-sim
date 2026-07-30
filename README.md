@@ -14,6 +14,14 @@ non-overlapping-coverage problem multicam-sim exists to benchmark. (Moving frame
 are the Linux/Modal [Kubric photoreal path](docs/kubric-modal.md); the analytic
 geometry, not the pixels, is the contract.)*
 
+![A three-camera grid over time: each camera's projected box is coloured by the object's stable identity, the tile border is green while that camera sees the object and red while it is blind, and a timeline tracks the handoff from station A to station B.](docs/assets/multiview_demo.gif)
+
+*The same handoff, annotated: each camera's projected box is coloured by the
+object's stable identity, so one colour is one object across every view. A green
+tile border means that camera sees it, red means blind, and the run walks the
+object from station A through the blind gap into station B. Reproduce: `uv run
+--with 'imageio[ffmpeg]' python scripts/record_multiview.py`.*
+
 **Can you recover a 3D point, or a human joint, when it is hidden in some camera
 views but still seen in others?** multicam-sim builds the synthetic multi-camera
 scenes you need to ask that question with ground truth in hand.
