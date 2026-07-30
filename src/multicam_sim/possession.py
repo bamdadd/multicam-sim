@@ -20,6 +20,7 @@ analytic manifest is unchanged when possession GT is absent.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -86,6 +87,8 @@ class InteractionEvent(BaseModel):
     @field_validator("time")
     @classmethod
     def _time_non_negative(cls, value: float) -> float:
+        if not math.isfinite(value):
+            raise ValueError("time must be finite")
         if value < 0.0:
             raise ValueError("time must be >= 0")
         return value

@@ -15,6 +15,7 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
+from pydantic import ValidationError
 
 from multicam_sim import build_manifest
 from multicam_sim.dsl import CameraRig, SceneBuilder
@@ -177,6 +178,19 @@ def test_object_tracks_current_holder_geometry() -> None:
     assert parcel[HANDOFF_FRAME - 1] == pytest.approx(
         [giver[HANDOFF_FRAME - 1][i] + OFFSET[i] for i in range(3)]
     )
+
+
+def test_interaction_event_rejects_non_finite_time() -> None:
+    """NaN and +/-inf must not validate: they serialise to JSON ``null`` and
+    then fail to reload, so a model-admissible value would not round-trip."""
+    for bad in (math.nan, math.inf, -math.inf):
+        with pytest.raises(ValidationError):
+            InteractionEvent(frame=1, time=bad, giver_id="g", receiver_id="r", object_id="o")
+
+    # A finite, non-negative time still validates and round-trips (the test is
+    # not vacuous).
+    event = InteractionEvent(frame=1, time=0.1, giver_id="g", receiver_id="r", object_id="o")
+    assert InteractionEvent.model_validate_json(event.model_dump_json()) == event
 
 
 def test_handoff_scene_roundtrips_through_json() -> None:
