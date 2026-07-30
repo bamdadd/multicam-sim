@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from ..cameras import Camera
 from ..entities import Entity, EntityFrame
 from ..occluders import OccluderUnion
-from ..possession import PossessionSegment, PossessionTimeline
+from ..possession import InteractionEvent, PossessionSegment, PossessionTimeline
 from ..scene import Scene
 from .behavior import Behavior, PathBehavior
 from .motion import PathUnion
@@ -69,6 +69,7 @@ class SceneBuilder:
         self._occlusions: list[Occlusion] = []
         self._hand_sweeps: list[HandSweep] = []
         self._attachments: list[_AttachmentSpec] = []
+        self._interactions: list[InteractionEvent] = []
 
     def cameras(self, cameras: list[Camera]) -> SceneBuilder:
         """Set the camera array (e.g. from :class:`multicam_sim.dsl.CameraRig`)."""
@@ -153,6 +154,66 @@ class SceneBuilder:
                 offset=offset,
                 holder_point=holder_point,
                 object_point=object_point,
+            )
+        )
+        return self
+
+    def handoff(
+        self,
+        object_id: str,
+        giver_id: str,
+        receiver_id: str,
+        frame: int,
+        *,
+        start: int = 0,
+        end: int | None = None,
+        offset: Vec3 = (0.0, 0.0, 0.0),
+        holder_point: str = "center",
+        object_point: str = "center",
+    ) -> SceneBuilder:
+        """Stage a two-agent hand-off of ``object_id`` at ``frame``.
+
+        ``giver_id`` carries the object over ``[start, frame)`` and
+        ``receiver_id`` carries it over ``[frame, end)`` (``end`` defaults to
+        ``num_frames``), so ``frame`` is the single frame at which the holder
+        id changes. Geometry is baked exactly like :meth:`attach` — the object
+        tracks its current holder plus ``offset`` on every held frame — and an
+        :class:`~multicam_sim.possession.InteractionEvent` (frame, ``time =
+        frame / fps``, giver, receiver, object) is recorded in the possession
+        sidecar of the built :class:`Scene`.
+        """
+        end = self.num_frames if end is None else end
+        if giver_id == receiver_id:
+            raise ValueError("giver and receiver must be different entities")
+        if not start < frame < end:
+            raise ValueError(
+                f"hand-off frame {frame} must satisfy start ({start}) < frame < end ({end})"
+            )
+        self.attach(
+            object_id,
+            giver_id,
+            start,
+            frame,
+            offset=offset,
+            holder_point=holder_point,
+            object_point=object_point,
+        )
+        self.attach(
+            object_id,
+            receiver_id,
+            frame,
+            end,
+            offset=offset,
+            holder_point=holder_point,
+            object_point=object_point,
+        )
+        self._interactions.append(
+            InteractionEvent(
+                frame=frame,
+                time=frame / self.fps,
+                giver_id=giver_id,
+                receiver_id=receiver_id,
+                object_id=object_id,
             )
         )
         return self
@@ -253,7 +314,9 @@ class SceneBuilder:
             )
 
         possession = (
-            PossessionTimeline(segments=possession_segments) if possession_segments else None
+            PossessionTimeline(segments=possession_segments, events=self._interactions)
+            if possession_segments
+            else None
         )
 
         return Scene(
