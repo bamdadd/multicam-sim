@@ -19,6 +19,10 @@ Two deliverables land in ``docs/assets/``:
   metrics (MOTA / IDF1 / id-switch), sourced by shelling out to the multicam-rt
   ``demo metrics`` binary on the SAME MTMC fixture and parsing its JSON. If rt is
   not reachable the tracking numbers fall back to a clearly-labelled placeholder.
+* ``multiview_metrics_sim.png`` — a public-safe panel computed ENTIRELY from the
+  sim's own ground truth: the same per-camera detection P/R, plus scene-level
+  multi-view coverage (union in-view fraction and the blind-gap frame count). It
+  depends on nothing external, so it always renders identically.
 
 Detection P/R definition (stated plainly on the panel): GT-positive = the object
 is present in the scene this frame (all frames); a detection = the camera has the
@@ -78,6 +82,7 @@ _GIF_OUT = _OUT_DIR / "multiview_demo.gif"
 _MP4_OUT = _OUT_DIR / "multiview_demo.mp4"
 _SHEET_OUT = _OUT_DIR / "multiview_contact_sheet.png"
 _METRICS_OUT = _OUT_DIR / "multiview_metrics.png"
+_METRICS_SIM_OUT = _OUT_DIR / "multiview_metrics_sim.png"
 
 
 def _id_color(gt_id: str) -> tuple[int, int, int]:
@@ -178,6 +183,41 @@ def _detection_pr(
 
 def _blank() -> _Obs:
     return _Obs((0.0, 0.0), False, False)
+
+
+# --------------------------------------------------------------------------- #
+# Scene-level coverage from ground truth (sim): the multi-view coverage story.
+# --------------------------------------------------------------------------- #
+class _Coverage:
+    """Union coverage across all cameras, computed from sim ground truth.
+
+    Every frame the object is present in the scene. A frame is *covered* when at
+    least one camera has it ``in_view``; a *blind-gap* frame is one that no camera
+    sees. With disjoint fields of view and no occluders the blind gap is purely
+    geometric: it is the corridor between stations, not an occlusion event.
+    """
+
+    __slots__ = ("num_frames", "union_covered", "blind_gap")
+
+    def __init__(self, num_frames: int, union_covered: int, blind_gap: int) -> None:
+        self.num_frames = num_frames
+        self.union_covered = union_covered
+        self.blind_gap = blind_gap
+
+    @property
+    def union_fraction(self) -> float:
+        return self.union_covered / self.num_frames if self.num_frames else 0.0
+
+
+def _scene_coverage(
+    obs: dict[tuple[int, int], _Obs], cam_ids: list[int], num_frames: int
+) -> _Coverage:
+    """Union in-view coverage and blind-gap count across all cameras."""
+    covered = 0
+    for fr in range(num_frames):
+        if any(obs.get((fr, cam), _blank()).in_view for cam in cam_ids):
+            covered += 1
+    return _Coverage(num_frames, union_covered=covered, blind_gap=num_frames - covered)
 
 
 # --------------------------------------------------------------------------- #
@@ -403,6 +443,72 @@ def _render_metrics_panel(pr_rows: list[_PR], tracking: _Tracking) -> Image.Imag
     return img
 
 
+def _render_metrics_sim_panel(pr_rows: list[_PR], coverage: _Coverage) -> Image.Image:
+    """Sim-only metrics: everything on this panel is computed from the sim's own
+    ground truth (projected-box GT + per-camera in-view labels). No external
+    tracker metrics — just the coverage story the geometry tells.
+    """
+    from PIL import Image, ImageDraw
+
+    w, h = 900, 560
+    img = Image.new("RGB", (w, h), (24, 24, 30))
+    d = ImageDraw.Draw(img)
+
+    nf = coverage.num_frames
+    d.text((24, 20), "MTMC demo: per-camera detection and multi-view coverage", fill=_TEXT)
+    d.text((24, 44), f"scene: mtmc (2 stations, 3 cams, {nf} frames, seed 0)", fill=_TEXT_DIM)
+
+    # --- per-camera detection bars (recall == coverage) --- #
+    d.text((24, 84), "Per-camera detection P / R  (GT+ = object present each frame;", fill=_TEXT)
+    d.text(
+        (24, 104),
+        "det = in_view). No occluders + exact projection => precision is structurally 1.0;",
+        fill=_TEXT_DIM,
+    )
+    d.text(
+        (24, 124),
+        f"recall = coverage (in-view frames / {nf}): the multi-view story.",
+        fill=_TEXT_DIM,
+    )
+
+    bx, by = 60, 170
+    bar_w, gap, max_h = 90, 60, 220
+    for i, row in enumerate(pr_rows):
+        x = bx + i * (bar_w + gap)
+        rh = int(max_h * row.recall)
+        d.rectangle([x, by + max_h - rh, x + bar_w, by + max_h], fill=(70, 150, 230))
+        d.rectangle([x, by, x + bar_w, by + max_h], outline=_TEXT_DIM, width=1)
+        d.text((x, by + max_h + 8), f"cam {row.cam}", fill=_TEXT)
+        d.text((x, by + max_h + 26), f"P {row.precision:.2f}", fill=_TEXT_DIM)
+        d.text((x, by + max_h + 42), f"R {row.recall:.2f}", fill=(120, 190, 255))
+        d.text((x, by + max_h + 58), f"{row.tp}/{row.tp + row.fn}", fill=_TEXT_DIM)
+    d.text((bx - 44, by), "R", fill=_TEXT_DIM)
+
+    # --- scene-level coverage (union across cameras) --- #
+    tx = 560
+    d.text((tx, 84), "Multi-view coverage (all cams)", fill=_TEXT)
+    d.text((tx, 106), "union in-view; blind gap = disjoint FOVs,", fill=_TEXT_DIM)
+    d.text((tx, 126), "not occlusion (no occluders here).", fill=_TEXT_DIM)
+
+    lines = [
+        ("Union coverage", f"{coverage.union_fraction:.2f}"),
+        ("Frames seen", f"{coverage.union_covered}/{nf}"),
+        ("Blind-gap frames", str(coverage.blind_gap)),
+    ]
+    ly = 170
+    for label, val in lines:
+        d.text((tx, ly), label, fill=_TEXT_DIM)
+        d.text((tx + 190, ly), val, fill=_TEXT)
+        ly += 34
+
+    d.text(
+        (24, h - 34),
+        "one identity, one colour across cameras: the whole point of MTMC.",
+        fill=_TEXT_DIM,
+    )
+    return img
+
+
 # --------------------------------------------------------------------------- #
 def main() -> None:
     import time
@@ -453,6 +559,10 @@ def main() -> None:
     tracking = _tracking_metrics()
     _render_metrics_panel(pr_rows, tracking).save(_METRICS_OUT)
 
+    # Sim-only metrics panel (public-safe): P/R + coverage, no external tracker.
+    coverage = _scene_coverage(obs_by_id.get(TRACK_ID, {}), cam_ids, num_frames)
+    _render_metrics_sim_panel(pr_rows, coverage).save(_METRICS_SIM_OUT)
+
     # --- report --- #
     def _kb(p: FsPath) -> str:
         return f"{p.stat().st_size / 1024:.1f} KiB" if p.exists() else "MISSING"
@@ -464,6 +574,7 @@ def main() -> None:
         print(f"mp4           FALLBACK — {mp4_note}")
     print(f"contact sheet {_SHEET_OUT.relative_to(_REPO_ROOT)}  {_kb(_SHEET_OUT)}")
     print(f"metrics png   {_METRICS_OUT.relative_to(_REPO_ROOT)}  {_kb(_METRICS_OUT)}")
+    print(f"metrics (sim) {_METRICS_SIM_OUT.relative_to(_REPO_ROOT)}  {_kb(_METRICS_SIM_OUT)}")
     print(f"grid          {frames[0].size[0]}x{frames[0].size[1]}  {num_frames} frames")
     print("per-cam detection P / R (recall == coverage):")
     for row in pr_rows:
@@ -471,6 +582,10 @@ def main() -> None:
             f"  cam {row.cam}: P {row.precision:.3f}  R {row.recall:.3f}  "
             f"({row.tp}/{row.tp + row.fn} frames in view)"
         )
+    print(
+        f"union coverage: {coverage.union_covered}/{coverage.num_frames} "
+        f"({coverage.union_fraction:.3f})  blind-gap frames {coverage.blind_gap}"
+    )
     print(f"tracking source: {tracking.source}")
     print(f"  MOTA {tracking.mota}  IDF1 {tracking.idf1}  id_switches {tracking.id_switches}")
     print(f"done in {time.time() - t0:.1f}s")
