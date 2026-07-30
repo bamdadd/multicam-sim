@@ -18,6 +18,7 @@ from .annotations import (
     write_coco,
     write_yolo,
 )
+from .assembly_line import build_assembly_line_scene
 from .cameras import Camera, Intrinsics
 from .dropout import SensorDropout
 from .entities import Entity, EntityFrame
@@ -28,6 +29,7 @@ from .groups import (
     compute_group_membership,
     write_group_json,
 )
+from .handoff_ltr import build_handoff_ltr_scene
 from .manifest import (
     AssumedCalibration,
     CameraManifest,
@@ -107,7 +109,9 @@ __all__ = [
     "TransitEdge",
     "YoloDataset",
     "YoloLabel",
+    "build_assembly_line_scene",
     "build_group_formation_scene",
+    "build_handoff_ltr_scene",
     "build_manifest",
     "build_mtmc_scene",
     "silhouette_visible_fraction",
