@@ -22,6 +22,17 @@ tile border means that camera sees it, red means blind, and the run walks the
 object from station A through the blind gap into station B. Reproduce: `uv run
 --with 'imageio[ffmpeg]' python scripts/record_multiview.py`.*
 
+![A metrics panel: three per-camera bars showing detection precision 1.0 and recall equal to each camera's in-view coverage, next to a multi-view coverage summary giving union in-view fraction, frames seen, and blind-gap frame count.](docs/assets/multiview_metrics_sim.png)
+
+*What the geometry tells you, straight from the sim's own ground truth. With no
+occluders and exact projection, per-camera detection precision is structurally
+1.0 and recall is just each camera's coverage (in-view frames / 15). The
+scene-level story is the union: across all three cameras only 8/15 frames are
+seen, leaving 7 blind-gap frames — that gap is the disjoint fields of view, not
+occlusion, and it is exactly the non-overlapping-coverage problem this sim
+exists to benchmark. Reproduce: `uv run --with 'imageio[ffmpeg]' python
+scripts/record_multiview.py`.*
+
 **Can you recover a 3D point, or a human joint, when it is hidden in some camera
 views but still seen in others?** multicam-sim builds the synthetic multi-camera
 scenes you need to ask that question with ground truth in hand.
