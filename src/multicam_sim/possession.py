@@ -6,6 +6,11 @@ The object's world point is driven by the holder's point during that interval
 (this is baked into the object's :class:`~multicam_sim.entities.Entity` frames
 at scene-build time) and is detached at ``end_frame``.
 
+A two-agent **hand-off** is the same channel with a holder id that changes:
+the giver's segment ends and the receiver's segment begins at the hand-off
+frame, and an :class:`InteractionEvent` (frame/time, giver id, receiver id,
+object id) records the transfer alongside the segments.
+
 Like :mod:`multicam_sim.order`, this module is pure typed models + logic.
 The timeline rides in a JSON sidecar and is attached to
 :class:`~multicam_sim.scene.Scene` via an optional field, so the byte-golden
@@ -53,16 +58,53 @@ class PossessionSegment(BaseModel):
         return self.start_frame <= frame < self.end_frame
 
 
+class InteractionEvent(BaseModel):
+    """One hand-off: ``object_id`` passes from ``giver_id`` to ``receiver_id``.
+
+    ``frame`` is the hand-off frame — the single frame at which the per-frame
+    possession holder changes — and ``time`` is that frame in wall-clock
+    seconds (``frame / fps``), baked in by the builder so the sidecar is
+    self-contained. Rides in the possession sidecar next to the segments,
+    never in the byte-golden manifest.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    frame: int
+    time: float
+    giver_id: str
+    receiver_id: str
+    object_id: str
+
+    @field_validator("frame")
+    @classmethod
+    def _frame_non_negative(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError("frame must be >= 0")
+        return value
+
+    @field_validator("time")
+    @classmethod
+    def _time_non_negative(cls, value: float) -> float:
+        if value < 0.0:
+            raise ValueError("time must be >= 0")
+        return value
+
+
 class PossessionTimeline(BaseModel):
     """A collection of possession segments for one or more objects.
 
     Segments are kept sorted by ``(object_id, start_frame)`` and the model
-    rejects overlapping intervals for the same object.
+    rejects overlapping intervals for the same object. ``events`` are the
+    :class:`InteractionEvent`s (hand-offs) recorded alongside the segments,
+    kept sorted by ``(frame, object_id)`` so the sidecar is deterministic;
+    empty when no hand-off was staged.
     """
 
     model_config = ConfigDict(frozen=True)
 
     segments: list[PossessionSegment] = []
+    events: list[InteractionEvent] = []
 
     @field_validator("segments")
     @classmethod
@@ -80,6 +122,11 @@ class PossessionTimeline(BaseModel):
                         f"[{cur.start_frame}, {cur.end_frame})"
                     )
         return sorted(value, key=lambda s: (s.object_id, s.start_frame))
+
+    @field_validator("events")
+    @classmethod
+    def _sorted_events(cls, value: list[InteractionEvent]) -> list[InteractionEvent]:
+        return sorted(value, key=lambda e: (e.frame, e.object_id))
 
     def holder_at_frame(self, object_id: str, frame: int) -> str | None:
         """Return the holder id for ``object_id`` at ``frame``, or ``None`` if
