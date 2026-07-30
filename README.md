@@ -6,6 +6,11 @@
 the pure-numpy rasterizer, with the object's analytic projected box drawn in every
 view that sees it. Reproduce: `uv run --with pillow python scripts/render_multiview_hero.py`.*
 
+![A 3D world view of a scene: a translucent ground plane with three cameras drawn as red view-cones at their calibrated world positions, each pointing at the scene, and the object's ground-truth 3D trajectory as a blue polyline crossing the space.](docs/assets/scene_3d.png)
+
+*The scene in 3D: every camera drawn as a view-cone at its real calibrated world position, the ground plane, and the object's ground-truth trajectory across the frames.
+One picture of where the cameras are and what they cover — camera coverage and overlap are visible directly, not inferred from per-camera tiles. Works on any manifest; reproduce: `uv run --with matplotlib python scripts/view_scene_3d.py`.*
+
 ![Three MTMC camera stations with non-overlapping fields of view watch one object cross a corridor on a synced timeline; it hands off from camera 0 to 1 to 2, with blind-gap frames where no camera sees it.](docs/assets/hero_grid.gif)
 
 *One object, three cameras with **disjoint** views, one timeline — a green border
