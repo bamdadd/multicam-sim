@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from .activity import ActivityTimeline
 from .cameras import Camera
 from .entities import Entity
 from .occluders import OccluderUnion
@@ -25,6 +26,9 @@ class Scene(BaseModel):
     :mod:`multicam_sim.possession`). It is additive: absent by default and never
     read by the manifest builder, so scenes that do not use it keep the
     byte-golden analytic manifest.
+
+    ``activity`` is an optional activity-state GT sidecar (see
+    :mod:`multicam_sim.activity`) — same additive contract as ``possession``.
     """
 
     fps: float
@@ -34,6 +38,7 @@ class Scene(BaseModel):
     occluders: list[OccluderUnion] = []
     topology: CameraTopology | None = None
     possession: PossessionTimeline | None = None
+    activity: ActivityTimeline | None = None
 
     def model_post_init(self, __context: Any) -> None:
         if self.topology is None:
