@@ -384,7 +384,10 @@ not have to be hand-authored per frame. Three parametric gaits — `walk`
 body-local target), `wave` (raised forearm oscillation) — each produce
 body-local joint offsets as a function of wall-clock time. A **root path** (any
 existing `PathUnion` from the motion DSL) translates the whole skeleton:
-`world joint = root.at_time(t) + local offset`. Frame compilation is driven
+`world joint = root.at_time(t) + local offset`. Limbs are rigid: knees and the
+reaching elbow are placed by closed-form two-link inverse kinematics with
+segment lengths fixed from `height`, so every COCO-17 edge keeps a constant
+length on every frame. Frame compilation is driven
 through the motion DSL's own `compile_frames`, so `over(seconds)` /
 `at_speed` / untimed stretch-to-scene behave exactly as they do for a single
 point, and the gait layer adds no second timing model. Everything is kinematic
