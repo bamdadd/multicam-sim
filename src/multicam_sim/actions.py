@@ -1,19 +1,23 @@
-"""Placement-synced operator action events (causal-fusion ground truth).
+"""δ-lagged hand dips and action→change ground truth for causal fusion.
 
-:class:`multicam_sim.order.ActionEvent` records *where* the operator's hand was
-at each placement; this module authors the *causal* half: a discrete **hand
-dip** — a strict local minimum of a tracked keypoint's height — timestamped
-``action_lag`` (δ) frames *before* each item's placement frame, so a consumer
-with only the emitted manifest can recover one dip per placement and associate
+Placement-synced operator action events are not new here:
+:class:`multicam_sim.order.ActionEvent` already records the operator's hand
+position at each placement frame. What this module adds is the recoverable
+*motion* and the *negatives*: a discrete **hand dip** — a strict local minimum
+of a tracked keypoint's height — authored into the pose at ``action_lag`` (δ)
+frames *before* each item's placement frame, so a consumer with only the
+emitted manifest can recover one dip per placement and associate
 action → change in time.
 
 Two authored negatives make the data able to *falsify* a weak association rule
 rather than merely confirm a strong one:
 
-* a **distractor action** — a dip that assembles nothing (no placement follows
-  within the causal lag window);
-* a **distractor change** — an item that moves with no dip inside the lag
-  window before it (it is simply omitted from the ground-truth pairs).
+* a **distractor action** — a dip that places nothing, timed so that a change
+  it did *not* cause follows inside the causal lag window: a naive
+  causal-forward associator ("pair each dip with the next change within the
+  window") pairs them, and the ground truth says otherwise;
+* a **distractor change** — an item whose move has no true causal action (it
+  is simply omitted from the ground-truth pairs).
 
 The ground truth rides in a JSON sidecar (e.g. ``interactions.json``) listing
 only the *true* ``(actor, item, action_frame, change_frame)`` pairs, so a
@@ -228,18 +232,32 @@ def build_action_ground_truth(
     """Derive the true pairs from placements: one dip at ``placed_at - δ`` each.
 
     ``placements`` must list only causally-backed placements; a distractor
-    change (an item moving outside the causal lag window) is simply omitted,
+    change (an item whose move has no true causal action) is simply omitted,
     which is exactly what makes it a negative for the consumer.
+
+    Raises if a placement sits at frame ``<= δ``: its dip would land on a frame
+    no :class:`DipSchedule` can author (a strict local minimum needs a
+    preceding frame), so the pair would reference an action no manifest can
+    contain. Better to fail here than emit unrecoverable ground truth.
     """
-    pairs = [
-        ActionChange(
-            actor_id=actor_id,
-            item_id=p.item,
-            action_frame=p.placed_at_frame - timing.action_lag,
-            change_frame=p.placed_at_frame,
+    pairs: list[ActionChange] = []
+    for p in placements:
+        action_frame = p.placed_at_frame - timing.action_lag
+        if action_frame < 1:
+            raise ValueError(
+                f"placement of {p.item!r} at frame {p.placed_at_frame} with "
+                f"action_lag {timing.action_lag} puts the causal dip at frame "
+                f"{action_frame}: no dip can be authored there "
+                "(a strict local minimum needs a preceding frame)"
+            )
+        pairs.append(
+            ActionChange(
+                actor_id=actor_id,
+                item_id=p.item,
+                action_frame=action_frame,
+                change_frame=p.placed_at_frame,
+            )
         )
-        for p in placements
-    ]
     return ActionGroundTruth(
         timing=timing, actor_id=actor_id, tracked_joint=tracked_joint, pairs=pairs
     )

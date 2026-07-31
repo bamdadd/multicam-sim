@@ -26,8 +26,10 @@ Emits two ground-truth sidecars next to this file (``--out`` to change dir):
 Opt-in **placement-synced preset** (``--placement-synced``): the continuous
 wrist reach is replaced by discrete hand dips synced to the placements (a
 strict local minimum of the tracked wrist's height at ``placed_at - δ`` per
-placed item), plus a distractor dip that assembles nothing and a distractor
-item (``part_d``) that moves outside the causal lag window. The true
+placed item), plus negatives that falsify temporal association: a distractor
+dip that places nothing, and a distractor item (``part_d``) whose uncaused
+move follows that dip inside the causal lag window — a naive causal-forward
+associator pairs them, and the ground truth says otherwise. The true
 ``(actor, item, action_frame, change_frame)`` pairs are written to
 ``interactions.json`` so a causal-fusion consumer can score precision/recall.
 Off by default: without the flag the scene and every emitted file are
@@ -80,9 +82,12 @@ _PLACED_AT = {"part_a": 2, "part_b": 5, "part_c": 8}
 
 # --- placement-synced preset (opt-in via --placement-synced) ---------------- #
 # The causal half of the fusion story: the tracked hand dips (strict local
-# height minimum) at ``placed_at - δ`` for each placed item; a distractor dip
-# assembles nothing, and a distractor item moves outside the causal lag window.
-# δ and the lag window are typed parameters (CausalTiming), not magic numbers.
+# height minimum) at ``placed_at - δ`` for each placed item. The negatives are
+# positioned to *falsify* a naive causal-forward associator ("pair each dip
+# with the next change inside the lag window"): the distractor dip places
+# nothing, but the distractor item's move — which it did not cause — follows
+# inside the window, so the naive rule pairs them and interactions.json says
+# otherwise. δ and the lag window are typed parameters (CausalTiming).
 _TRACKED_HAND = "right_wrist"
 _SYNC_NUM_FRAMES = 13
 _SYNC_TIMING = CausalTiming(action_lag=1, lag_window=2)
@@ -90,8 +95,8 @@ _DIP_DEPTH = 0.30
 _DIP_HALF_WIDTH = 1
 _DISTRACTOR_ITEM = "part_d"
 _DISTRACTOR_STAGING = (2.60, -0.30, 0.90)
-_DISTRACTOR_PLACED_AT = 10  # no dip within the lag window before it
-_DISTRACTOR_DIP = 11  # assembles nothing: no placement within the window after it
+_DISTRACTOR_DIP = 10  # places nothing; >= 2*half_width+1 from the dip at 7
+_DISTRACTOR_PLACED_AT = 11  # uncaused move inside the dip-10 lag window
 
 # Standing COCO-17 offsets (dx, dy, dz) from the foot base; +y is the facing dir.
 _JOINT_OFFSETS: dict[str, tuple[float, float, float]] = {
@@ -272,9 +277,9 @@ def run(out_dir: Path, placement_synced: bool = False) -> dict[str, Any]:
 
     truth = None
     if placement_synced:
-        # interactions.json = the causal GT sidecar: only the true pairs — the
-        # distractor dip and the distractor (late) placement are omitted, so a
-        # consumer that associates either scores a false positive.
+        # interactions.json = the causal GT sidecar: only the true pairs. The
+        # dip-10 → part_d pairing a temporal associator will make is absent, so
+        # it scores as a false positive — the authored negative.
         truth = build_action_ground_truth(
             _SYNC_TIMING,
             actor_id="operator",
