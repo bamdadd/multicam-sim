@@ -12,6 +12,7 @@ from __future__ import annotations
 from ..noise import CalibrationDrift, NoiseModel, PixelNoise
 from .behavior import Behavior, PathBehavior, WaypointBehavior
 from .builder import SceneBuilder
+from .gait import Gait, ReachGait, WalkGait, WaveGait
 from .motion import (
     BezierPath,
     CirclePath,
@@ -31,6 +32,7 @@ __all__ = [
     "CalibrationDrift",
     "CameraRig",
     "CirclePath",
+    "Gait",
     "HandSweep",
     "LinearPath",
     "NoiseModel",
@@ -40,10 +42,13 @@ __all__ = [
     "PathUnion",
     "PixelNoise",
     "PoseOverride",
+    "ReachGait",
     "RepeatPath",
     "SceneBuilder",
     "SequencePath",
     "StationView",
+    "WalkGait",
+    "WaveGait",
     "WaypointBehavior",
     "WaypointPath",
 ]
