@@ -228,3 +228,75 @@ def test_provenance_sidecar_roundtrips_and_reproduces_the_scene() -> None:
     resampled = record.spec.sample(record.seed)
     assert resampled.background == scene.background
     assert resampled.light == scene.light
+
+
+def test_golden_sample_pins_the_shipped_draw_order() -> None:
+    """The literals below are an independent oracle: pasted-in floats the
+    shipped implementation produces for this exact spec and seed. They are NOT
+    computed from ``sample()`` or derived from any production constant, so any
+    change to the draw order, the seed handling, or the distributions turns
+    this test red even though sampling stays deterministic."""
+    spec = RandomizationSpec(
+        background=BackgroundSpec(rgb_min=(0.0, 0.0, 0.0), rgb_max=(0.2, 0.2, 0.2)),
+        light=LightSpec(intensity=(2.0, 4.0), azimuth_deg=(0.0, 360.0), elevation_deg=(30.0, 90.0)),
+        distractors=DistractorSpec(count=(2, 2), x=(-2.0, 2.0), y=(-2.0, 2.0), z=(0.0, 1.0)),
+    )
+    sample = spec.sample(42)
+
+    assert sample.background is not None
+    assert sample.background.rgb == pytest.approx(
+        (0.15479120971119267, 0.08777568795041046, 0.1717195839822765), rel=1e-12
+    )
+    assert sample.light is not None
+    assert sample.light.intensity == pytest.approx(3.3947360581187276, rel=1e-12)
+    assert sample.light.azimuth_deg == pytest.approx(33.90384523955383, rel=1e-12)
+    assert sample.light.elevation_deg == pytest.approx(88.53734109820536, rel=1e-12)
+    assert len(sample.distractor_positions) == 2
+    assert sample.distractor_positions[0] == pytest.approx(
+        (1.0445588079614119, 1.1442572211078152, 0.12811363267554587), rel=1e-12
+    )
+    assert sample.distractor_positions[1] == pytest.approx(
+        (-0.19845624841773146, -0.5168079030696751, 0.9267649888486018), rel=1e-12
+    )
+
+
+def test_repeated_randomize_never_collides_distractor_ids() -> None:
+    spec = RandomizationSpec(distractors=DistractorSpec(count=(2, 2)))
+    scene = _builder().randomize(spec, seed=1).randomize(spec, seed=2).build()
+
+    ids = [entity.id for entity in scene.entities]
+    assert len(ids) == len(set(ids)), f"duplicate entity ids: {ids}"
+    assert ids == [
+        "obj",
+        "rand_distractor_0",
+        "rand_distractor_1",
+        "rand_distractor_2",
+        "rand_distractor_3",
+    ]
+    # id-keyed lookups and the manifest agree with the entity list
+    manifest = build_manifest(scene)
+    assert [entity.id for entity in manifest.entities] == ids
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda: BackgroundSpec(rgb_min=(float("nan"), 0.0, 0.0)),
+        lambda: BackgroundSpec(rgb_max=(0.0, float("inf"), 0.0)),
+        lambda: BackgroundSpec(rgb_max=(0.0, float("-inf"), 0.0)),
+        lambda: LightSpec(intensity=(float("nan"), 4.0)),
+        lambda: LightSpec(intensity=(float("-inf"), 4.0)),
+        lambda: LightSpec(intensity=(2.0, float("inf"))),
+        lambda: LightSpec(azimuth_deg=(float("nan"), float("nan"))),
+        lambda: LightSpec(azimuth_deg=(0.0, float("inf"))),
+        lambda: LightSpec(elevation_deg=(float("nan"), 45.0)),
+        lambda: DistractorSpec(x=(float("nan"), 1.0)),
+        lambda: DistractorSpec(y=(float("-inf"), 1.0)),
+        lambda: DistractorSpec(z=(0.0, float("inf"))),
+    ],
+)
+def test_non_finite_bounds_rejected_at_construction(make: object) -> None:
+    """NaN and +/-inf must fail as a ValidationError naming the field, not as
+    a numpy OverflowError deep inside ``sample()``."""
+    with pytest.raises(ValidationError):
+        make()  # type: ignore[operator]
