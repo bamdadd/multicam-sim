@@ -2,25 +2,38 @@
 
 The motion DSL (:mod:`multicam_sim.dsl.motion`) moves a single named point; the
 pose layer (:mod:`multicam_sim.pose`) represents a skeleton per frame but leaves
-the authoring of 17 joint positions per frame to the caller. This module closes
-that gap: a **gait** generates body-local joint offsets as a function of
+the authoring of 17 joint positions per frame to the caller. The pose layer
+alone can already be animated by hand — ``examples/assembly_station.py`` builds
+a ``PoseTrajectory`` from a literal 17-joint offset table with a sinusoidal
+wrist reach — but every offset is hand-authored per frame, with no timing
+model, no root path, and no reusable library API. This module is that library
+layer: a **gait** generates body-local joint offsets as a function of
 wall-clock time, and a **root path** (any existing ``PathUnion`` —
 ``LinearPath`` / ``CirclePath`` / ...) translates the whole skeleton:
 
     world_joint(frame) = root.at_time(t) + local_offset(gait, t)
 
+Limbs are rigid: intermediate joints (knees, the reaching elbow) are placed by
+closed-form two-link inverse kinematics with segment lengths fixed from
+``height``, so every COCO-17 edge keeps a constant length on every frame. These
+trajectories are ground truth for downstream consumers; a bone that changes
+length is structurally wrong output, not merely unrealistic.
+
 Timing is NOT re-implemented here. Frame compilation is driven through the
 existing :meth:`_PathNode.compile_frames`, so ``over(seconds)`` / ``at_speed``
 on the root path stretch or retime the translation exactly as they do for a
 single point, and the gait samples its own motion at the same per-frame
-wall-clock times (``t = frame / fps``). Gait cadence (step/wave frequency,
-reach duration) is parameterised in seconds, on the same wall-clock axis the
-timing model already uses.
+wall-clock times (``t = frame / fps``).
+
+NOTE: ``over(seconds)`` / ``at_speed(v)`` retime the **root translation only**.
+Gait cadence (step/wave frequency, reach duration) is parameterised in
+wall-clock seconds and does NOT stretch with them.
 
 Everything is kinematic and fully deterministic — there is no randomness to
 seed: the same ``(gait, fps, num_frames)`` yields byte-identical joint
 positions. Anatomical realism is explicitly not the bar; the gaits produce all
-17 COCO joints, move continuously, and round-trip through the manifest.
+17 COCO joints, rigid limbs, continuous motion, and round-trip through the
+manifest.
 """
 
 from __future__ import annotations
@@ -45,6 +58,8 @@ def _standing_offsets(height: float) -> dict[str, FloatArray]:
     The root sits at the pelvis centre; Z is up, the body faces +y, and the
     left side is -x (the same convention as the pose smoke scene). Proportions
     are fractions of total body ``height`` — a first pass, meant to be tuned.
+    The knees stand slightly bent (+y) so the two-link leg solve starts away
+    from full extension.
     """
     h = height
     return {
@@ -61,10 +76,10 @@ def _standing_offsets(height: float) -> dict[str, FloatArray]:
         "right_wrist": np.array([0.165 * h, 0.0, -0.06 * h]),
         "left_hip": np.array([-0.1 * h, 0.0, 0.0]),
         "right_hip": np.array([0.1 * h, 0.0, 0.0]),
-        "left_knee": np.array([-0.1 * h, 0.0, -0.26 * h]),
-        "right_knee": np.array([0.1 * h, 0.0, -0.26 * h]),
-        "left_ankle": np.array([-0.105 * h, 0.0, -0.49 * h]),
-        "right_ankle": np.array([0.105 * h, 0.0, -0.49 * h]),
+        "left_knee": np.array([-0.1 * h, 0.05 * h, -0.26 * h]),
+        "right_knee": np.array([0.1 * h, 0.05 * h, -0.26 * h]),
+        "left_ankle": np.array([-0.1 * h, 0.0, -0.49 * h]),
+        "right_ankle": np.array([0.1 * h, 0.0, -0.49 * h]),
     }
 
 
@@ -78,6 +93,63 @@ def _rot_y(theta: float) -> FloatArray:
     """Rotation about the y axis (swings a raised forearm side to side)."""
     c, s = math.cos(theta), math.sin(theta)
     return np.array([[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]])
+
+
+#: Margin kept from full extension when clamping an unreachable endpoint.
+#: At exactly ``l1 + l2`` the two-link solve has ``h = 0`` and its condition
+#: number diverges (a tiny endpoint change moves the mid joint arbitrarily
+#: fast); clamping a whisker inside the reachable sphere keeps the solve —
+#: and the joint velocities it produces — bounded, while the clamped endpoint
+#: still tracks the reachable sphere continuously.
+_IK_MARGIN = 5e-4
+
+#: Safety factor on the densely sampled speed used for IK mid-joint bounds:
+#: finite differences on a smooth function underestimate the true peak, and
+#: the grid may sit slightly off the peak phase.
+_SAMPLE_SAFETY = 1.5
+
+
+def _two_link(
+    start: FloatArray,
+    end: FloatArray,
+    l1: float,
+    l2: float,
+    bend: Vec3,
+) -> tuple[FloatArray, FloatArray]:
+    """Closed-form two-link IK: place the mid joint between ``start`` and ``end``.
+
+    ``l1`` / ``l2`` are the fixed proximal/distal segment lengths. Returns
+    ``(mid, end_used)``: when the endpoint is beyond reach it is first clamped
+    to just inside the reachable sphere (see ``_IK_MARGIN``), and ``end_used``
+    is the clamped endpoint so the caller's end joint agrees with the solve.
+    ``bend`` picks the side the mid joint bows toward (its component
+    perpendicular to the limb axis); if ``bend`` is (near-)parallel to the
+    limb, an arbitrary fixed perpendicular is used instead.
+    """
+    delta = end - start
+    d = float(np.linalg.norm(delta))
+    if d < 1e-12:
+        # degenerate: start and end coincide; fold the limb along `bend`
+        e = np.asarray(bend, dtype=np.float64)
+        e = e / np.linalg.norm(e)
+        return start + l1 * e, end
+    cap = (l1 + l2) * (1.0 - _IK_MARGIN)
+    floor = abs(l1 - l2) + _IK_MARGIN * (l1 + l2)
+    d_eff = min(max(d, floor), cap)
+    if d_eff != d:
+        delta = delta * (d_eff / d)
+        end = start + delta
+        d = d_eff
+    e = delta / d
+    a = (l1 * l1 - l2 * l2 + d * d) / (2.0 * d)
+    h = math.sqrt(max(l1 * l1 - a * a, 0.0))
+    n = np.asarray(bend, dtype=np.float64)
+    n = n - float(n @ e) * e
+    if float(np.linalg.norm(n)) < 1e-9:
+        ref = np.array([1.0, 0.0, 0.0]) if abs(e[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
+        n = ref - float(ref @ e) * e
+    n = n / np.linalg.norm(n)
+    return start + a * e + h * n, end
 
 
 class _GaitBase(BaseModel):
@@ -105,13 +177,34 @@ class _GaitBase(BaseModel):
         raise NotImplementedError
 
     def max_local_speed(self) -> float:
-        """Analytic upper bound on any joint's body-local speed (units/second).
+        """Upper bound on any joint's body-local speed (units/second).
 
-        Used to derive per-frame continuity bounds from the gait's own
-        parameters: a joint can move at most
+        Endpoints and rigidly rotated joints are bounded analytically from the
+        gait's own parameters (derivatives of the sinusoid / smoothstep terms).
+        IK-placed mid joints (knees, the reaching elbow) are bounded by
+        sampling the gait's own offsets on a dense deterministic grid over one
+        period and taking the max finite-difference speed with a safety factor
+        (``_SAMPLE_SAFETY``) — the two-link solve has no simple closed-form
+        velocity bound, but it is smooth, so a dense sample plus margin is
+        tight and honest. Either way the bound is derived from the gait's own
+        parameters, never hardcoded: a joint can move at most
         ``(root_speed + max_local_speed()) / fps`` between frames.
         """
         raise NotImplementedError
+
+    def _sampled_max_speed(self, period: float, samples: int = 720) -> float:
+        """Max per-joint body-local speed of this gait, finite-differenced on a
+        deterministic grid over ``period`` seconds."""
+        base = _standing_offsets(self.height)
+        prev = self._local_offsets(0.0, base)
+        best = 0.0
+        for i in range(1, samples + 1):
+            cur = self._local_offsets(period * i / samples, base)
+            for name in COCO17_JOINTS:
+                speed = float(np.linalg.norm(cur[name] - prev[name])) * samples / period
+                best = max(best, speed)
+            prev = cur
+        return best
 
     # -- compilation ------------------------------------------------------- #
     def to_pose_trajectory(
@@ -146,16 +239,19 @@ class _GaitBase(BaseModel):
 class WalkGait(_GaitBase):
     """Translating body with periodic legs and opposite-phase arm swing.
 
-    Legs swing sinusoidally in the facing plane at ``step_frequency`` full
-    gait cycles per second (left and right legs half a cycle apart); the foot
-    lifts while swinging forward. Arms hang and swing in opposite phase to the
-    same-side leg. A small vertical ``bob`` at twice the step frequency moves
-    the whole body. All terms are continuous in ``t``.
+    Each foot rides a sphere of radius ``0.97 * (thigh + shin)`` about its hip,
+    swinging in the facing plane at ``step_frequency`` gait cycles per second
+    (left and right legs half a cycle apart); the spherical swing lifts the
+    foot naturally at both extremes and always stays inside the leg's reach,
+    so the knee's two-link solve is well-conditioned everywhere. The knee is
+    placed by rigid two-link IK with fixed thigh/shin lengths and bows forward.
+    Arms hang and swing in opposite phase to the same-side leg. A small
+    vertical ``bob`` at twice the step frequency moves the whole body. All
+    terms are continuous in ``t``.
     """
 
     step_frequency: float = 1.8  # gait cycles per second
-    stride: float = 0.35  # peak forward/back ankle swing (world units)
-    lift: float = 0.06  # peak foot lift during the forward swing (world units)
+    swing: float = 0.35  # peak leg swing angle about the hip (radians)
     arm_swing: float = 0.5  # peak arm swing angle (radians)
     bob: float = 0.02  # peak vertical body bob (world units)
 
@@ -166,7 +262,7 @@ class WalkGait(_GaitBase):
             raise ValueError("step_frequency must be > 0")
         return value
 
-    @field_validator("stride", "lift", "arm_swing", "bob")
+    @field_validator("swing", "arm_swing", "bob")
     @classmethod
     def _non_negative_amplitude(cls, value: float, info: ValidationInfo) -> float:
         if value < 0.0:
@@ -175,18 +271,20 @@ class WalkGait(_GaitBase):
 
     def _local_offsets(self, t: float, base: dict[str, FloatArray]) -> dict[str, FloatArray]:
         phi = 2.0 * math.pi * self.step_frequency * t
+        thigh = float(np.linalg.norm(base["left_knee"] - base["left_hip"]))
+        shin = float(np.linalg.norm(base["left_ankle"] - base["left_knee"]))
+        leg_radius = 0.97 * (thigh + shin)  # foot swings inside the leg's reach
         offsets = dict(base)
         for side, phase in (("left", phi), ("right", phi + math.pi)):
-            swing = math.sin(phase)
+            theta = self.swing * math.sin(phase)
             hip = base[f"{side}_hip"]
-            ankle = base[f"{side}_ankle"] + np.array(
-                [0.0, self.stride * swing, self.lift * max(0.0, swing)]
-            )
-            # the knee tracks the hip-ankle midpoint, pushed forward (+y)
+            ankle_target = hip + leg_radius * np.array([0.0, math.sin(theta), -math.cos(theta)])
+            # rigid two-link leg: fixed thigh/shin lengths, knee bows forward (+y)
+            knee, ankle = _two_link(hip, ankle_target, thigh, shin, (0.0, 1.0, 0.0))
             offsets[f"{side}_ankle"] = ankle
-            offsets[f"{side}_knee"] = 0.5 * (hip + ankle) + np.array([0.0, 0.05 * self.height, 0.0])
+            offsets[f"{side}_knee"] = knee
             # same-side arm swings in opposite phase to the leg
-            rot = _rot_x(-self.arm_swing * swing)
+            rot = _rot_x(-self.arm_swing * math.sin(phase))
             shoulder = base[f"{side}_shoulder"]
             elbow = shoulder + rot @ (base[f"{side}_elbow"] - shoulder)
             offsets[f"{side}_elbow"] = elbow
@@ -197,26 +295,34 @@ class WalkGait(_GaitBase):
         return offsets
 
     def max_local_speed(self) -> float:
-        """Bound: ankle ``omega*hypot(stride, lift)`` vs wrist
-        ``omega*arm_swing*(upper_arm + forearm)``, plus the ``omega*bob``
-        whole-body term that rides on every joint. ``omega = 2*pi*step_frequency``.
+        """Fully analytic: the foot rides a sphere of radius ``0.97*(thigh +
+        shin)`` at angular speed ``swing * omega``, so the ankle moves at most
+        ``0.97*(thigh+shin)*swing*omega`` and the IK knee exactly ``thigh *
+        swing * omega`` (its perpendicular and along-limb parts rotate
+        together); the wrist moves at most ``arm_swing * omega * (upper_arm +
+        forearm)``; ``bob * omega`` rides on every joint. ``omega =
+        2*pi*step_frequency``.
         """
         omega = 2.0 * math.pi * self.step_frequency
         base = _standing_offsets(self.height)
-        ankle_speed = omega * math.hypot(self.stride, self.lift)
+        thigh = float(np.linalg.norm(base["left_knee"] - base["left_hip"]))
+        shin = float(np.linalg.norm(base["left_ankle"] - base["left_knee"]))
+        leg_speed = 0.97 * (thigh + shin) * self.swing * omega
         upper_arm = float(np.linalg.norm(base["left_elbow"] - base["left_shoulder"]))
         forearm = float(np.linalg.norm(base["left_wrist"] - base["left_elbow"]))
         arm_speed = omega * self.arm_swing * (upper_arm + forearm)
-        return omega * self.bob + max(ankle_speed, arm_speed)
+        return omega * self.bob + max(leg_speed, arm_speed)
 
 
 class ReachGait(_GaitBase):
     """One arm extends from its rest pose to a body-local ``target``.
 
     The wrist follows a smoothstep ramp (zero velocity at both ends, so the
-    motion is continuous and holds at the target once reached); the elbow
-    tracks toward the shoulder-target midpoint, dropped slightly below the
-    line. Past ``reach_duration`` the pose holds at the target.
+    motion is continuous and holds at the target once reached); the elbow is
+    solved by rigid two-link IK with fixed upper-arm/forearm lengths, bowing
+    outward and down from the shoulder-target line as the rest elbow does. A
+    target beyond the arm's reach is clamped to the reachable sphere. Past
+    ``reach_duration`` the pose holds at the target.
     """
 
     target: Vec3  # body-local point the wrist moves to
@@ -230,32 +336,55 @@ class ReachGait(_GaitBase):
             raise ValueError("reach_duration must be > 0")
         return value
 
-    def _elbow_target(self, base: dict[str, FloatArray]) -> FloatArray:
+    def _effective_target(self, base: dict[str, FloatArray]) -> FloatArray:
+        """The reach destination, clamped to just inside the arm's reach.
+
+        Clamping the destination once — rather than the endpoint per frame —
+        means the smoothstep approaches the reachable sphere with vanishing
+        velocity and never crosses it mid-swing, so clamping cannot introduce
+        a velocity spike (or any discontinuity) in the wrist or the IK elbow.
+        """
         shoulder = base[f"{self.arm}_shoulder"]
-        target = np.asarray(self.target, dtype=np.float64)
-        mid: FloatArray = 0.5 * (shoulder + target) + np.array([0.0, 0.0, -0.05 * self.height])
-        return mid
+        upper_arm = float(np.linalg.norm(base[f"{self.arm}_elbow"] - shoulder))
+        forearm = float(np.linalg.norm(base[f"{self.arm}_wrist"] - base[f"{self.arm}_elbow"]))
+        to_target = np.asarray(self.target, dtype=np.float64) - shoulder
+        dist = float(np.linalg.norm(to_target))
+        cap = (upper_arm + forearm) * (1.0 - _IK_MARGIN)
+        if dist <= cap or dist < 1e-12:
+            return np.asarray(self.target, dtype=np.float64)
+        clamped: FloatArray = shoulder + to_target * (cap / dist)
+        return clamped
 
     def _local_offsets(self, t: float, base: dict[str, FloatArray]) -> dict[str, FloatArray]:
         u = min(max(t / self.reach_duration, 0.0), 1.0)
         s = u * u * (3.0 - 2.0 * u)  # smoothstep: continuous, zero end velocities
-        target = np.asarray(self.target, dtype=np.float64)
-        offsets = dict(base)
+        shoulder = base[f"{self.arm}_shoulder"]
         wrist_rest = base[f"{self.arm}_wrist"]
-        elbow_rest = base[f"{self.arm}_elbow"]
-        offsets[f"{self.arm}_wrist"] = wrist_rest + s * (target - wrist_rest)
-        offsets[f"{self.arm}_elbow"] = elbow_rest + s * (self._elbow_target(base) - elbow_rest)
+        upper_arm = float(np.linalg.norm(base[f"{self.arm}_elbow"] - shoulder))
+        forearm = float(np.linalg.norm(wrist_rest - base[f"{self.arm}_elbow"]))
+        wrist_target = wrist_rest + s * (self._effective_target(base) - wrist_rest)
+        # rigid two-link arm: the elbow bows outward and down from the
+        # shoulder-wrist line, as the rest elbow does relative to the rest arm
+        sign = -1.0 if self.arm == "left" else 1.0
+        bend = (sign * 0.4, 0.0, -1.0)
+        elbow, wrist = _two_link(shoulder, wrist_target, upper_arm, forearm, bend)
+        offsets = dict(base)
+        offsets[f"{self.arm}_elbow"] = elbow
+        offsets[f"{self.arm}_wrist"] = wrist
         return offsets
 
     def max_local_speed(self) -> float:
-        """Bound: smoothstep's peak derivative is 1.5, so a joint covering a
-        rest-to-goal distance ``d`` moves at most ``1.5 * d / reach_duration``.
+        """Analytic term: smoothstep's peak derivative is 1.5, so the wrist
+        endpoint moves at most ``1.5 * |effective_target - rest| /
+        reach_duration``. The IK elbow has no closed-form velocity bound, so
+        the result is the max of the analytic term and the densely sampled,
+        safety-factored speed over the ramp.
         """
         base = _standing_offsets(self.height)
-        target = np.asarray(self.target, dtype=np.float64)
-        wrist_dist = float(np.linalg.norm(target - base[f"{self.arm}_wrist"]))
-        elbow_dist = float(np.linalg.norm(self._elbow_target(base) - base[f"{self.arm}_elbow"]))
-        return 1.5 * max(wrist_dist, elbow_dist) / self.reach_duration
+        wrist_dist = float(np.linalg.norm(self._effective_target(base) - base[f"{self.arm}_wrist"]))
+        analytic = 1.5 * wrist_dist / self.reach_duration
+        sampled = _SAMPLE_SAFETY * self._sampled_max_speed(2.0 * self.reach_duration)
+        return max(analytic, sampled)
 
 
 class WaveGait(_GaitBase):
@@ -320,8 +449,7 @@ class Gait:
         root: PathUnion = _DEFAULT_ROOT,
         height: float = 1.7,
         step_frequency: float = 1.8,
-        stride: float = 0.35,
-        lift: float = 0.06,
+        swing: float = 0.35,
         arm_swing: float = 0.5,
         bob: float = 0.02,
     ) -> WalkGait:
@@ -329,8 +457,7 @@ class Gait:
             root=root,
             height=height,
             step_frequency=step_frequency,
-            stride=stride,
-            lift=lift,
+            swing=swing,
             arm_swing=arm_swing,
             bob=bob,
         )
