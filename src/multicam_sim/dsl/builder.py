@@ -76,6 +76,7 @@ class SceneBuilder:
         self._background: Background | None = None
         self._light: Light | None = None
         self._randomization: RandomizationRecord | None = None
+        self._rand_distractors = 0
 
     def cameras(self, cameras: list[Camera]) -> SceneBuilder:
         """Set the camera array (e.g. from :class:`multicam_sim.dsl.CameraRig`)."""
@@ -129,14 +130,19 @@ class SceneBuilder:
         entry point (id ``rand_distractor_{i}``), and a
         :class:`~multicam_sim.randomization.RandomizationRecord` (spec + seed)
         rides on the scene as provenance. Calling it again re-samples and
-        appends its distractors on top.
+        appends its distractors on top; ids come from a per-builder counter so
+        a second call can never collide with the first.
         """
         sample = spec.sample(seed)
         self._background = sample.background
         self._light = sample.light
         self._randomization = RandomizationRecord(spec=spec, seed=seed)
-        for i, position in enumerate(sample.distractor_positions):
-            self.distractor(f"rand_distractor_{i}", LinearPath(a=position, b=position))
+        for position in sample.distractor_positions:
+            self.distractor(
+                f"rand_distractor_{self._rand_distractors}",
+                LinearPath(a=position, b=position),
+            )
+            self._rand_distractors += 1
         return self
 
     def occlude(self, occlusion: Occlusion) -> SceneBuilder:
