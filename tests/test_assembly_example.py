@@ -127,55 +127,77 @@ def test_synced_dips_recoverable_from_manifest_alone(example: ModuleType, tmp_pa
     """Strict local minima of the wrist height == the synced dips + distractor.
 
     The placements land at frames 2/5/8 with δ=1, so dips sit at 1/4/7, plus
-    the distractor dip at 11. A consumer with only manifest.json recovers them.
+    the distractor dip at 10. A consumer with only manifest.json recovers them.
     """
     example.run(tmp_path, placement_synced=True)
     manifest = json.loads((tmp_path / "manifest.json").read_text())
 
     z = _joint_height_series(manifest, "operator", "right_wrist")
     dips = _strict_local_minima(z)
-    assert dips == [1, 4, 7, 11]
+    assert dips == [1, 4, 7, 10]
     # each true dip is exactly δ=1 frame before its placement, strictly dipped
     for dip, placed in [(1, 2), (4, 5), (7, 8)]:
         assert placed - dip == 1
         assert z[dip] < z[dip - 1] and z[dip] < z[dip + 1]
 
 
-def test_synced_causal_pairs_recoverable_from_manifest_alone(
+def _naive_causal_forward_associate(
+    dips: list[int], changes: list[tuple[str, int]], lag_window: int
+) -> list[tuple[str, str, int, int]]:
+    """The associator a consumer would write first: pair each dip with the next
+    change inside the lag window. ``changes`` are ``(item_id, frame)``."""
+    pairs = []
+    for dip in sorted(dips):
+        later = [(item, c) for item, c in changes if 0 < c - dip <= lag_window]
+        if later:
+            item, change = min(later, key=lambda ic: ic[1])
+            pairs.append(("operator", item, dip, change))
+    return pairs
+
+
+def test_synced_negatives_falsify_naive_causal_association(
     example: ModuleType, tmp_path: Path
 ) -> None:
-    """A reference consumer — dips + item changes, associated within the lag
-    window — recovers exactly the interactions.json ground truth, and the two
-    distractors falsify rather than confirm: the late item has no dip in
-    window, the distractor dip has no change in window."""
+    """The negatives must make the naive causal-forward rule score below perfect.
+
+    The distractor dip at 10 places nothing, but part_d's uncaused move at 11
+    follows inside the lag window — the naive rule pairs them, and
+    interactions.json says otherwise: exactly one false positive.
+    """
     example.run(tmp_path, placement_synced=True)
     manifest = json.loads((tmp_path / "manifest.json").read_text())
     truth = json.loads((tmp_path / "interactions.json").read_text())
     lag_window = truth["timing"]["lag_window"]
 
     dips = _strict_local_minima(_joint_height_series(manifest, "operator", "right_wrist"))
-    recovered = []
-    for item in ("part_a", "part_b", "part_c", "part_d"):
-        for change in _item_change_frames(manifest, item):
-            causal = [a for a in dips if 0 < change - a <= lag_window]
-            recovered += [("operator", item, a, change) for a in causal]
-
-    truth_pairs = [
+    changes = [
+        (item, c)
+        for item in ("part_a", "part_b", "part_c", "part_d")
+        for c in _item_change_frames(manifest, item)
+    ]
+    predicted = _naive_causal_forward_associate(dips, changes, lag_window)
+    truth_pairs = {
         (p["actor_id"], p["item_id"], p["action_frame"], p["change_frame"]) for p in truth["pairs"]
-    ]
-    assert recovered == truth_pairs  # windowed association == ground truth, exactly
+    }
 
-    # distractor change: part_d moves at frame 10 with no dip in (10-2, 10)
-    assert _item_change_frames(manifest, "part_d") == [10]
-    assert not [a for a in dips if 0 < 10 - a <= lag_window]
-    # distractor action: the dip at 11 assembles nothing — no change in (11, 13]
-    assert 11 in dips
-    all_changes = [
-        c
-        for i in ("part_a", "part_b", "part_c", "part_d")
-        for c in _item_change_frames(manifest, i)
-    ]
-    assert not [c for c in all_changes if 0 < c - 11 <= lag_window]
+    tp = [p for p in predicted if p in truth_pairs]
+    fp = [p for p in predicted if p not in truth_pairs]
+    fn = [p for p in truth_pairs if p not in predicted]
+    precision = len(tp) / len(predicted)
+    recall = len(tp) / len(truth_pairs)
+
+    # the distractor dip→part_d pairing is THE false positive, by name
+    assert fp == [("operator", "part_d", 10, 11)]
+    assert (len(tp), len(fp), len(fn)) == (3, 1, 0)
+    assert precision == 3 / 4 < 1.0
+    assert recall == 1.0
+
+    # even a δ-informed rule trips on the confounder: a dip sits exactly δ=1
+    # before part_d's move, and the ground truth still says it is no pair
+    assert truth["timing"]["action_lag"] == 11 - 10
+    assert all(p["item_id"] != "part_d" for p in truth["pairs"])
+    # part_d itself is placed (order stays fulfilled) and fully worktop-visible
+    assert _item_change_frames(manifest, "part_d") == [11]
 
 
 def test_synced_interactions_sidecar_contents(example: ModuleType, tmp_path: Path) -> None:

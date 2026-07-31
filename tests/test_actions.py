@@ -127,6 +127,37 @@ def test_build_action_ground_truth_pairs_and_sorting() -> None:
     assert truth.timing == timing
 
 
+def test_build_action_ground_truth_rejects_unauthorable_dips() -> None:
+    """A placement at frame <= δ would put its dip where no DipSchedule can
+    author one (a strict local minimum needs a preceding frame) — fail loudly
+    at construction, naming the item and frames."""
+    timing = CausalTiming(action_lag=5, lag_window=5)
+    # the reviewer's case: placed at 3 with δ=5 → dip at frame -2
+    with pytest.raises(ValueError, match=r"'part_a'.*frame 3.*frame -2"):
+        build_action_ground_truth(
+            timing,
+            "operator",
+            "right_wrist",
+            [ItemPlacement(item="part_a", placed_at_frame=3, entity_id="part_a")],
+        )
+    # boundary: placed exactly at δ → dip at frame 0, still unauthorable
+    with pytest.raises(ValueError, match=r"'part_a'.*frame 5.*frame 0"):
+        build_action_ground_truth(
+            timing,
+            "operator",
+            "right_wrist",
+            [ItemPlacement(item="part_a", placed_at_frame=5, entity_id="part_a")],
+        )
+    # just above the boundary: placed at δ+1 → dip at frame 1, authorable
+    truth = build_action_ground_truth(
+        timing,
+        "operator",
+        "right_wrist",
+        [ItemPlacement(item="part_a", placed_at_frame=6, entity_id="part_a")],
+    )
+    assert [(p.action_frame, p.change_frame) for p in truth.pairs] == [(1, 6)]
+
+
 def test_sidecar_round_trip(tmp_path: Path) -> None:
     timing = CausalTiming(action_lag=1, lag_window=2)
     placements = [ItemPlacement(item="part_a", placed_at_frame=2, entity_id="part_a")]
