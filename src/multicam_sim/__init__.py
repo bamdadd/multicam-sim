@@ -6,6 +6,7 @@ Camera convention mirrored from multicam-occlusion@59f4906 (see
 
 from __future__ import annotations
 
+from .activity import ActivitySegment, ActivityState, ActivityTimeline, write_activity_json
 from .annotations import (
     CocoAnnotation,
     CocoCategory,
@@ -66,6 +67,9 @@ from .visibility import silhouette_visible_fraction
 __all__ = [
     "COCO17_EDGES",
     "COCO17_JOINTS",
+    "ActivitySegment",
+    "ActivityState",
+    "ActivityTimeline",
     "AssumedCalibration",
     "Box",
     "CalibrationDrift",
@@ -119,6 +123,7 @@ __all__ = [
     "export_overlay",
     "export_yolo",
     "validate_manifest",
+    "write_activity_json",
     "write_coco",
     "write_group_json",
     "write_manifest",
