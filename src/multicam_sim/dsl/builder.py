@@ -14,9 +14,10 @@ from ..cameras import Camera
 from ..entities import Entity, EntityFrame
 from ..occluders import OccluderUnion
 from ..possession import InteractionEvent, PossessionSegment, PossessionTimeline
+from ..randomization import Background, Light, RandomizationRecord, RandomizationSpec
 from ..scene import Scene
 from .behavior import Behavior, PathBehavior
-from .motion import PathUnion
+from .motion import LinearPath, PathUnion
 from .occlusion import HandSweep, Occlusion
 
 Vec3 = tuple[float, float, float]
@@ -72,6 +73,9 @@ class SceneBuilder:
         self._attachments: list[_AttachmentSpec] = []
         self._interactions: list[InteractionEvent] = []
         self._activity_segments: list[ActivitySegment] = []
+        self._background: Background | None = None
+        self._light: Light | None = None
+        self._randomization: RandomizationRecord | None = None
 
     def cameras(self, cameras: list[Camera]) -> SceneBuilder:
         """Set the camera array (e.g. from :class:`multicam_sim.dsl.CameraRig`)."""
@@ -112,6 +116,27 @@ class SceneBuilder:
         self._distractors.append(
             _EntitySpec(id=id, behavior=_as_behavior(path), name=name, edges=None, seed=seed)
         )
+        return self
+
+    def randomize(self, spec: RandomizationSpec, *, seed: int = 0) -> SceneBuilder:
+        """Sample ``spec`` under ``seed`` and apply the result to the scene.
+
+        The builder does not own the randomness: :meth:`RandomizationSpec.sample`
+        draws one concrete sample (deterministic for a given spec + seed), and
+        this entry point applies it — the sampled ``background`` / ``light`` are
+        stored on the built :class:`Scene`, each sampled distractor position is
+        added as a static distractor through the existing :meth:`distractor`
+        entry point (id ``rand_distractor_{i}``), and a
+        :class:`~multicam_sim.randomization.RandomizationRecord` (spec + seed)
+        rides on the scene as provenance. Calling it again re-samples and
+        appends its distractors on top.
+        """
+        sample = spec.sample(seed)
+        self._background = sample.background
+        self._light = sample.light
+        self._randomization = RandomizationRecord(spec=spec, seed=seed)
+        for i, position in enumerate(sample.distractor_positions):
+            self.distractor(f"rand_distractor_{i}", LinearPath(a=position, b=position))
         return self
 
     def occlude(self, occlusion: Occlusion) -> SceneBuilder:
@@ -360,4 +385,7 @@ class SceneBuilder:
             occluders=occluders,
             possession=possession,
             activity=activity,
+            background=self._background,
+            light=self._light,
+            randomization=self._randomization,
         )

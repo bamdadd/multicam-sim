@@ -58,6 +58,16 @@ from .possession import (
     PossessionTimeline,
     write_possession_json,
 )
+from .randomization import (
+    Background,
+    BackgroundSpec,
+    DistractorSpec,
+    Light,
+    LightSpec,
+    RandomizationRecord,
+    RandomizationSample,
+    RandomizationSpec,
+)
 from .scene import Scene
 from .smoke import build_multi_entity_scene, build_pose_smoke_scene, build_smoke_scene
 from .topology import CameraTopology, Station, TransitEdge
@@ -71,6 +81,8 @@ __all__ = [
     "ActivityState",
     "ActivityTimeline",
     "AssumedCalibration",
+    "Background",
+    "BackgroundSpec",
     "Box",
     "CalibrationDrift",
     "Cylinder",
@@ -81,6 +93,7 @@ __all__ = [
     "CocoCategory",
     "CocoDataset",
     "CocoImage",
+    "DistractorSpec",
     "Entity",
     "EntityFrame",
     "EntityManifest",
@@ -91,6 +104,8 @@ __all__ = [
     "HandOccluder",
     "InteractionEvent",
     "Intrinsics",
+    "Light",
+    "LightSpec",
     "Manifest",
     "MeshBackend",
     "NoiseModel",
@@ -103,6 +118,9 @@ __all__ = [
     "PoseTrajectory",
     "PossessionSegment",
     "PossessionTimeline",
+    "RandomizationRecord",
+    "RandomizationSample",
+    "RandomizationSpec",
     "Scene",
     "SensorDropout",
     "Skeleton",

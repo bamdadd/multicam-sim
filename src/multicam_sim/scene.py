@@ -11,6 +11,7 @@ from .cameras import Camera
 from .entities import Entity
 from .occluders import OccluderUnion
 from .possession import PossessionTimeline
+from .randomization import Background, Light, RandomizationRecord
 from .topology import CameraTopology
 
 
@@ -29,6 +30,12 @@ class Scene(BaseModel):
 
     ``activity`` is an optional activity-state GT sidecar (see
     :mod:`multicam_sim.activity`) — same additive contract as ``possession``.
+
+    ``background`` / ``light`` are optional render-time environment values and
+    ``randomization`` an optional provenance sidecar (spec + seed, see
+    :mod:`multicam_sim.randomization`). All three are additive — ``None`` by
+    default and never read by the manifest builder — so an un-randomized scene
+    is unchanged.
     """
 
     fps: float
@@ -39,6 +46,9 @@ class Scene(BaseModel):
     topology: CameraTopology | None = None
     possession: PossessionTimeline | None = None
     activity: ActivityTimeline | None = None
+    background: Background | None = None
+    light: Light | None = None
+    randomization: RandomizationRecord | None = None
 
     def model_post_init(self, __context: Any) -> None:
         if self.topology is None:
