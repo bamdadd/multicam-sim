@@ -14,6 +14,7 @@ import pytest
 from pydantic import ValidationError
 
 from multicam_sim import (
+    COCO17_EDGES,
     COCO17_JOINTS,
     Camera,
     Intrinsics,
@@ -54,9 +55,19 @@ def _trajectories() -> dict[str, PoseTrajectory]:
     }
 
 
-def _root_speed(gait: WalkGait | ReachGait | WaveGait) -> float:
-    # every test root is a timed LinearPath, so the traversal speed is exact
-    return gait.root.length() / gait.root.total_duration()
+def _max_root_frame_displacement(
+    gait: WalkGait | ReachGait | WaveGait, fps: float, num_frames: int
+) -> float:
+    """Actual maximum per-frame displacement of the compiled root path.
+
+    ``root.length() / root.total_duration()`` is only an *average* speed — a
+    Bezier or Waypoint root legitimately moves faster than that on individual
+    frames — so the root term is measured from the frames the motion DSL
+    itself compiles, not derived from the average.
+    """
+    frames = gait.root.compile_frames(fps, num_frames, name="root")
+    pts = [np.asarray(f.points["root"]) for f in frames]
+    return max(float(np.linalg.norm(pts[i + 1] - pts[i])) for i in range(len(pts) - 1))
 
 
 def _max_frame_displacement(traj: PoseTrajectory) -> float:
@@ -86,19 +97,67 @@ def test_every_gait_yields_all_17_joints_every_frame() -> None:
 
 
 def test_joint_motion_is_continuous_frame_to_frame() -> None:
-    """Per-frame displacement is bounded by what the parameters allow: the root
-    path moves at ``root.length() / duration`` and the gait itself moves any
-    joint at most ``gait.max_local_speed()`` (analytic bounds on the sinusoid /
-    smoothstep derivatives — see each gait's docstring), so between frames
-    1/fps apart no joint can travel further than their sum times 1/fps.
+    """Per-frame displacement is bounded by what the parameters allow: the gait
+    moves any joint at most ``gait.max_local_speed()`` (bounds derived from the
+    gait's own parameters — see each gait's docstring), and the root contributes
+    at most its actual maximum per-frame displacement measured from the
+    compiled root frames. Between frames 1/fps apart no joint can travel
+    further than their sum. Covers linear, Bezier, and Waypoint roots — the
+    measured root term matters for the non-constant-speed ones.
     """
-    for name, gait in _gaits().items():
+    gaits = _gaits()
+    gaits["walk_bezier_root"] = Gait.walk(
+        root=Path.bezier([(0.0, -1.0, 0.9), (0.3, 0.0, 1.2), (0.0, 1.0, 0.9)]).over(2.0)
+    )
+    # slow gait on an unequal-legged waypoint root: the root's speed peaks at
+    # twice its average on the long leg, so an average-speed root term would
+    # false-fail here (worst 0.0821 vs average-based bound 0.0492)
+    gaits["walk_waypoint_root"] = Gait.walk(
+        swing=0.05,
+        arm_swing=0.05,
+        bob=0.0,
+        root=Path.waypoints([(0.0, 0.0, 0.9), (0.02, 0.0, 0.9), (0.0, 2.0, 0.9)]).over(2.0),
+    )
+    # a reach past full extension: the endpoint rides the clamped sphere, and
+    # the clamp must not introduce a discontinuity
+    gaits["reach_beyond"] = Gait.reach((2.0, 2.0, 2.0))
+    for name, gait in gaits.items():
         traj = gait.to_pose_trajectory("p0", fps=_FPS, num_frames=_NUM_FRAMES)
-        bound = (_root_speed(gait) + gait.max_local_speed()) / _FPS
+        root_max = _max_root_frame_displacement(gait, _FPS, _NUM_FRAMES)
+        bound = root_max + gait.max_local_speed() / _FPS
         worst = _max_frame_displacement(traj)
         assert worst <= bound * (1.0 + 1e-9), f"{name}: {worst} > {bound}"
         # the bound must actually bite: the gait really moves close to it
         assert worst > 0.25 * bound, f"{name}: bound {bound} is loose vs {worst}"
+
+
+# -- rigidity ------------------------------------------------------------------ #
+
+
+def _segment_lengths(traj: PoseTrajectory) -> dict[tuple[str, str], list[float]]:
+    lengths: dict[tuple[str, str], list[float]] = {edge: [] for edge in COCO17_EDGES}
+    for frame in traj.frames:
+        for a, b in COCO17_EDGES:
+            delta = np.asarray(frame.joints[a]) - np.asarray(frame.joints[b])
+            lengths[(a, b)].append(float(np.linalg.norm(delta)))
+    return lengths
+
+
+def test_skeleton_segments_keep_constant_length() -> None:
+    """Bones do not stretch: every one of the 19 COCO-17 edges keeps a constant
+    length across all frames, for all three gaits — including a reach whose
+    target sits beyond the arm's reach, so the clamped full-extension case is
+    covered too. Gaits are ground truth for downstream consumers; a limb that
+    changes length is structurally wrong output.
+    """
+    gaits = _gaits()
+    gaits["reach_beyond"] = Gait.reach((2.0, 2.0, 2.0))  # past full extension
+    for name, gait in gaits.items():
+        traj = gait.to_pose_trajectory("p0", fps=_FPS, num_frames=_NUM_FRAMES)
+        for (a, b), ds in _segment_lengths(traj).items():
+            assert max(ds) == pytest.approx(min(ds), abs=1e-9), (
+                f"{name}: segment {a}->{b} stretches {min(ds)}..{max(ds)}"
+            )
 
 
 # -- root translation -------------------------------------------------------- #
@@ -147,11 +206,28 @@ def test_wave_only_moves_the_waving_arm() -> None:
     assert max(xs) - min(xs) > 0.1  # the forearm actually oscillates
 
 
+def test_reach_beyond_extension_clamps_to_reachable_sphere() -> None:
+    traj = Gait.reach((2.0, 2.0, 2.0)).to_pose_trajectory("p0", fps=_FPS, num_frames=_NUM_FRAMES)
+    last = traj.frames[-1].joints
+    shoulder = np.asarray(last["right_shoulder"])
+    # segment lengths are rigid, so arm length is measurable on any frame
+    arm = float(
+        np.linalg.norm(np.asarray(last["right_elbow"]) - shoulder)
+        + np.linalg.norm(np.asarray(last["right_wrist"]) - np.asarray(last["right_elbow"]))
+    )
+    reach = float(np.linalg.norm(np.asarray(last["right_wrist"]) - shoulder))
+    assert reach < arm  # never past full extension
+    assert reach > 0.99 * arm  # but right up against the clamped sphere
+    for frame in traj.frames:
+        for xyz in frame.joints.values():
+            assert all(np.isfinite(xyz))
+
+
 def test_validation_at_construction() -> None:
     with pytest.raises(ValidationError):
         Gait.walk(step_frequency=0.0)
     with pytest.raises(ValidationError):
-        Gait.walk(stride=-1.0)
+        Gait.walk(swing=-1.0)
     with pytest.raises(ValidationError):
         Gait.walk(height=-1.7)
     with pytest.raises(ValidationError):
@@ -171,6 +247,47 @@ def test_compilation_is_deterministic() -> None:
         a = gait.to_pose_trajectory("p0", fps=_FPS, num_frames=_NUM_FRAMES)
         b = gait.to_pose_trajectory("p0", fps=_FPS, num_frames=_NUM_FRAMES)
         assert [f.joints for f in a.frames] == [f.joints for f in b.frames], name
+
+
+def test_golden_joint_positions() -> None:
+    """Pin the shipped math: literal joint coordinates for fixed gait configs,
+    captured from the implementation under review. These share no constant
+    with production code — if the gait math changes, this test says so.
+    """
+    root = Path.linear((0.0, -1.0, 0.9), (0.0, 1.0, 0.9)).over(2.0)
+    walk = Gait.walk(root=root).to_pose_trajectory("p0", fps=_FPS, num_frames=_NUM_FRAMES)
+    assert walk.frames[0].joints["left_knee"] == pytest.approx(
+        [-0.17, -0.8968421379812801, 0.4618819160275089], abs=1e-12
+    )
+    assert walk.frames[0].joints["right_ankle"] == pytest.approx(
+        [0.17, -1.0, 0.07527558459496919], abs=1e-12
+    )
+    assert walk.frames[0].joints["nose"] == pytest.approx(
+        [0.0, -1.0, 1.5630000000000002], abs=1e-12
+    )
+    assert walk.frames[15].joints["left_knee"] == pytest.approx(
+        [-0.17, -0.48851475573743075, 0.4569575112887736], abs=1e-12
+    )
+    assert walk.frames[15].joints["right_ankle"] == pytest.approx(
+        [0.17, -0.3315279625337081, 0.09957623484475053], abs=1e-12
+    )
+    assert walk.frames[15].joints["left_wrist"] == pytest.approx(
+        [-0.2805, -0.3276403200315219, 0.8304213396359754], abs=1e-12
+    )
+
+    reach = Gait.reach((0.4, 0.3, 0.4)).to_pose_trajectory("p0", fps=_FPS, num_frames=_NUM_FRAMES)
+    assert reach.frames[60].joints["right_elbow"] == pytest.approx(
+        [0.36104825356835, 0.07117786831816082, 0.22698788047508495], abs=1e-12
+    )
+    assert reach.frames[60].joints["right_wrist"] == pytest.approx([0.4, 0.3, 0.4], abs=1e-12)
+
+    wave = Gait.wave().to_pose_trajectory("p0", fps=_FPS, num_frames=_NUM_FRAMES)
+    assert wave.frames[8].joints["right_elbow"] == pytest.approx(
+        [0.493, 0.0, 0.5609999999999999], abs=1e-12
+    )
+    assert wave.frames[8].joints["right_wrist"] == pytest.approx(
+        [0.45704154556562737, 0.0, 0.8477542319734639], abs=1e-12
+    )
 
 
 # -- manifest round-trip ----------------------------------------------------- #
