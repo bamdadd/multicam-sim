@@ -36,7 +36,9 @@ Vec3 = tuple[float, float, float]
 
 
 def _check_interval(name: str, lo: float, hi: float) -> None:
-    """Reject an inverted closed interval (the shared ``min > max`` check)."""
+    """Reject non-finite bounds and an inverted closed interval (``min > max``)."""
+    if not (math.isfinite(lo) and math.isfinite(hi)):
+        raise ValueError(f"{name}: bounds must be finite; got ({lo}, {hi})")
     if lo > hi:
         raise ValueError(f"{name}: min ({lo}) must be <= max ({hi})")
 
