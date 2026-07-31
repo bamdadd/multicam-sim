@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..activity import ActivitySegment, ActivityState, ActivityTimeline
 from ..cameras import Camera
 from ..entities import Entity, EntityFrame
 from ..occluders import OccluderUnion
@@ -70,6 +71,7 @@ class SceneBuilder:
         self._hand_sweeps: list[HandSweep] = []
         self._attachments: list[_AttachmentSpec] = []
         self._interactions: list[InteractionEvent] = []
+        self._activity_segments: list[ActivitySegment] = []
 
     def cameras(self, cameras: list[Camera]) -> SceneBuilder:
         """Set the camera array (e.g. from :class:`multicam_sim.dsl.CameraRig`)."""
@@ -218,6 +220,30 @@ class SceneBuilder:
         )
         return self
 
+    def activity(
+        self,
+        entity_id: str,
+        state: ActivityState,
+        start: int,
+        end: int,
+    ) -> SceneBuilder:
+        """Label ``entity_id`` as being in activity ``state`` over ``[start, end)``.
+
+        Pure ground truth: it records an
+        :class:`~multicam_sim.activity.ActivitySegment` in the activity GT
+        sidecar of the built :class:`Scene` and never touches the entity's
+        motion or geometry, so the byte-golden manifest is unchanged. Frames
+        outside all of an entity's segments are unlabeled.
+        """
+        if start < 0 or end > self.num_frames or end <= start:
+            raise ValueError(
+                f"invalid activity window [{start}, {end}) for num_frames={self.num_frames}"
+            )
+        self._activity_segments.append(
+            ActivitySegment(entity_id=entity_id, state=state, start_frame=start, end_frame=end)
+        )
+        return self
+
     def build(self) -> Scene:
         """Compile the DSL into a :class:`Scene` (cameras, entities, occluders)."""
         if not self._cameras:
@@ -319,6 +345,13 @@ class SceneBuilder:
             else None
         )
 
+        for seg in self._activity_segments:
+            if seg.entity_id not in frames_by_id:
+                raise ValueError(f"activity segment references unknown entity {seg.entity_id!r}")
+        activity = (
+            ActivityTimeline(segments=self._activity_segments) if self._activity_segments else None
+        )
+
         return Scene(
             fps=self.fps,
             num_frames=self.num_frames,
@@ -326,4 +359,5 @@ class SceneBuilder:
             entities=entities,
             occluders=occluders,
             possession=possession,
+            activity=activity,
         )
