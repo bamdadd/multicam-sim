@@ -48,7 +48,10 @@ class BackgroundSpec(BaseModel):
 
     Channels are in ``[0, 1]`` (the renderer's colour convention, e.g.
     ``pyrender.Scene(bg_color=...)``). The default interval stays dark, around
-    today's fixed black background.
+    the default black background. Background was already configurable per
+    renderer via ``PyrenderBackend(bg=...)``; this knob makes it a scene-level,
+    randomizable value (recorded on the scene) that takes precedence over that
+    constructor default when set.
     """
 
     model_config = ConfigDict(frozen=True)

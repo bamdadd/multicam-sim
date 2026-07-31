@@ -64,6 +64,8 @@ def _build_pyrender_scene(
     pyrender, trimesh = _import_pyrender("The pyrender backend")
 
     cam = scene.cameras[camera_id]
+    # Precedence: a scene-level sampled background wins over the renderer's
+    # constructor ``bg`` (the more specific value beats the renderer default).
     bg_rgb = scene.background.rgb if scene.background is not None else bg
     pr_scene = pyrender.Scene(bg_color=[*bg_rgb, 1.0], ambient_light=[0.4, 0.4, 0.4])
 

@@ -346,7 +346,11 @@ The three knobs:
 - **`background`** (`BackgroundSpec`) — the render-time background colour.
   `rgb_min` / `rgb_max` are RGB triples with channels in `[0, 1]` (the
   renderer's colour convention), sampled per channel. Default interval
-  `(0, 0, 0)`–`(0.2, 0.2, 0.2)`: dark, around today's fixed black.
+  `(0, 0, 0)`–`(0.2, 0.2, 0.2)`: dark, around the default black. Background
+  was already configurable per renderer through the `PyrenderBackend(bg=...)`
+  constructor argument; this knob adds **scene-level, randomizable** control —
+  the sampled value is recorded on the `Scene` and **takes precedence over the
+  constructor `bg`** wherever the scene carries one.
 - **`light`** (`LightSpec`) — the key light. `intensity` is in renderer light
   units (today's fixed headlight is `3.0`; default interval `(2.0, 4.0)`).
   `azimuth_deg` / `elevation_deg` give the direction **from the scene to the
