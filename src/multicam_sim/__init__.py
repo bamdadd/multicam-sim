@@ -37,6 +37,7 @@ from .groups import (
     compute_group_membership,
     write_group_json,
 )
+from .handoff_ltr import build_handoff_ltr_scene
 from .manifest import (
     AssumedCalibration,
     CameraManifest,
@@ -144,6 +145,7 @@ __all__ = [
     "YoloLabel",
     "build_action_ground_truth",
     "build_group_formation_scene",
+    "build_handoff_ltr_scene",
     "build_parcel_sort_scene",
     "build_manifest",
     "build_mtmc_scene",
