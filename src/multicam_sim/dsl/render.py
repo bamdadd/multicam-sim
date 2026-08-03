@@ -64,7 +64,10 @@ def _build_pyrender_scene(
     pyrender, trimesh = _import_pyrender("The pyrender backend")
 
     cam = scene.cameras[camera_id]
-    pr_scene = pyrender.Scene(bg_color=[*bg, 1.0], ambient_light=[0.4, 0.4, 0.4])
+    # Precedence: a scene-level sampled background wins over the renderer's
+    # constructor ``bg`` (the more specific value beats the renderer default).
+    bg_rgb = scene.background.rgb if scene.background is not None else bg
+    pr_scene = pyrender.Scene(bg_color=[*bg_rgb, 1.0], ambient_light=[0.4, 0.4, 0.4])
 
     # entity points -> small spheres at this frame's ground-truth coords
     for entity in scene.entities:
@@ -92,8 +95,32 @@ def _build_pyrender_scene(
     pose[:3, 3] = cam.centre()
     pr_scene.add(pr_cam, pose=pose)
     if add_light:
-        pr_scene.add(pyrender.DirectionalLight(intensity=3.0), pose=pose)
+        # A sampled scene light overrides the fixed headlight (intensity 3.0 at
+        # the camera pose); without one the render is unchanged.
+        light = scene.light
+        light_intensity = light.intensity if light is not None else 3.0
+        light_pose = _light_pose(pose, light.direction()) if light is not None else pose
+        pr_scene.add(pyrender.DirectionalLight(intensity=light_intensity), pose=light_pose)
     return pr_scene, intr
+
+
+def _light_pose(camera_pose: FloatArray, direction: tuple[float, float, float]) -> FloatArray:
+    """Rotation aligning a directional light's local -Z with ``direction``.
+
+    pyrender's ``DirectionalLight`` shines along its pose's local -Z (the same
+    axis the camera looks along), so the headlight default is just the camera
+    pose; a sampled world direction needs the pose's third column set to the
+    negated unit direction, with an orthonormal basis built around it.
+    """
+    z_col = -np.asarray(direction, dtype=np.float64)
+    z_col /= np.linalg.norm(z_col)
+    ref = np.array([0.0, 0.0, 1.0]) if abs(z_col[2]) < 0.9 else np.array([1.0, 0.0, 0.0])
+    x_col = np.cross(ref, z_col)
+    x_col /= np.linalg.norm(x_col)
+    y_col = np.cross(z_col, x_col)
+    pose = np.array(camera_pose, dtype=np.float64)
+    pose[:3, :3] = np.column_stack([x_col, y_col, z_col])
+    return pose
 
 
 @runtime_checkable

@@ -329,6 +329,56 @@ The result is the ordinary `Scene`; `build_manifest(scene)` is unchanged. A DSL
 scene that reproduces the smoke setup recovers ground truth for a cam-1-occluded
 frame through the real `triangulate_dlt`, exactly like the hand-built smoke.
 
+### Domain randomization (optional, seeded — issue #41)
+
+Synthetic-to-real robustness needs varied scenes. A typed
+`RandomizationSpec` (`multicam_sim.randomization`) attaches seeded
+randomization knobs to the builder: `builder.randomize(spec, seed=...)` samples
+the spec once (`RandomizationSpec.sample(seed)`, a pure function over
+`numpy.random.default_rng(seed)` — the builder never owns the randomness) and
+applies the concrete result. Every knob is a **closed `(min, max)` interval**,
+validated at construction (an inverted `min > max` interval is rejected), and
+every knob is **off by default** (`None` / empty), so a scene built without
+randomization serialises byte-identically to before.
+
+The three knobs:
+
+- **`background`** (`BackgroundSpec`) — the render-time background colour.
+  `rgb_min` / `rgb_max` are RGB triples with channels in `[0, 1]` (the
+  renderer's colour convention), sampled per channel. Default interval
+  `(0, 0, 0)`–`(0.2, 0.2, 0.2)`: dark, around the default black. Background
+  was already configurable per renderer through the `PyrenderBackend(bg=...)`
+  constructor argument; this knob adds **scene-level, randomizable** control —
+  the sampled value is recorded on the `Scene` and **takes precedence over the
+  constructor `bg`** wherever the scene carries one.
+- **`light`** (`LightSpec`) — the key light. `intensity` is in renderer light
+  units (today's fixed headlight is `3.0`; default interval `(2.0, 4.0)`).
+  `azimuth_deg` / `elevation_deg` give the direction **from the scene to the
+  light** in **degrees** — azimuth in the world XY plane from +X toward +Y
+  (default `(0, 360)`), elevation above the XY plane (default `(30, 90)`, so
+  the light stays above the horizon); the light shines along the negated
+  vector (`Light.direction()`).
+- **`distractors`** (`DistractorSpec`) — a count of static, non-target objects.
+  `count` is an **inclusive** integer interval (default `(1, 3)`); each
+  distractor's `x` / `y` / `z` (scene units) is drawn uniformly from its
+  interval (default a 4×4×1 box around the origin at floor level) and added
+  through the **existing** `SceneBuilder.distractor` entry point as
+  `rand_distractor_{i}` — so randomized distractors appear in the manifest
+  exactly like hand-added ones and never touch the primary entities' ground
+  truth.
+
+Sampling draws in a **fixed order** (background channels; light intensity,
+azimuth, elevation; distractor count; then three coordinates per distractor),
+so the **reproducibility contract** is: same spec + same seed → byte-identical
+sample, and therefore a byte-identical scene. Provenance is recorded
+additively: the built `Scene` carries the sampled `background` / `light` values
+plus a `randomization` sidecar (`RandomizationRecord`, spec + seed) that
+round-trips through scene JSON, so a randomized run regenerates from its own
+output via `record.spec.sample(record.seed)`. None of these fields is read by
+the manifest builder; the sampled background/light are consumed by the
+pyrender backend (the Kubric backend keeps its fixed key light — see the
+renderer section).
+
 ## Renderer backend (`multicam_sim.dsl.render`) — not the contract
 
 `RendererBackend` is a `Protocol` (Scene + camera + frame → `(H,W,3)` pixels).
