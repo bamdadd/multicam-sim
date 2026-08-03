@@ -7,6 +7,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from .activity import ActivityTimeline
+from .appearance import AppearanceTable
 from .cameras import Camera
 from .entities import Entity
 from .occluders import OccluderUnion
@@ -31,6 +32,11 @@ class Scene(BaseModel):
     ``activity`` is an optional activity-state GT sidecar (see
     :mod:`multicam_sim.activity`) — same additive contract as ``possession``.
 
+    ``appearance`` is an optional appearance-descriptor GT sidecar (see
+    :mod:`multicam_sim.appearance`), a seeded pixel-free re-id cue — same
+    additive contract: ``None`` by default and never read by the manifest
+    builder, so the byte-golden analytic manifest is unchanged.
+
     ``background`` / ``light`` are optional render-time environment values and
     ``randomization`` an optional provenance sidecar (spec + seed, see
     :mod:`multicam_sim.randomization`). All three are additive — ``None`` by
@@ -46,6 +52,7 @@ class Scene(BaseModel):
     topology: CameraTopology | None = None
     possession: PossessionTimeline | None = None
     activity: ActivityTimeline | None = None
+    appearance: AppearanceTable | None = None
     background: Background | None = None
     light: Light | None = None
     randomization: RandomizationRecord | None = None

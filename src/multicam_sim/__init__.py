@@ -27,6 +27,7 @@ from .annotations import (
     write_coco,
     write_yolo,
 )
+from .appearance import AppearanceTable, EntityAppearance, write_appearance_json
 from .cameras import Camera, Intrinsics
 from .dropout import SensorDropout
 from .entities import Entity, EntityFrame
@@ -92,6 +93,7 @@ __all__ = [
     "ActivitySegment",
     "ActivityState",
     "ActivityTimeline",
+    "AppearanceTable",
     "AssumedCalibration",
     "Background",
     "BackgroundSpec",
@@ -109,6 +111,7 @@ __all__ = [
     "DipSchedule",
     "DistractorSpec",
     "Entity",
+    "EntityAppearance",
     "EntityFrame",
     "EntityManifest",
     "FrameObs",
@@ -160,6 +163,7 @@ __all__ = [
     "validate_manifest",
     "write_actions_json",
     "write_activity_json",
+    "write_appearance_json",
     "write_coco",
     "write_group_json",
     "write_manifest",
