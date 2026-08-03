@@ -21,7 +21,12 @@ from pathlib import Path
 
 import pytest
 
-from multicam_sim import build_manifest, build_mtmc_scene, build_smoke_scene
+from multicam_sim import (
+    build_manifest,
+    build_mtmc_scene,
+    build_parcel_sort_scene,
+    build_smoke_scene,
+)
 from multicam_sim.scene import Scene
 
 _FIXTURES = Path(__file__).parent / "fixtures" / "manifest_golden"
@@ -67,6 +72,7 @@ def _same_shape(got: object, ref: object, path: str = "") -> None:
         ("smoke", build_smoke_scene),
         ("mtmc", build_mtmc_scene),
         ("assembly", _assembly_scene),
+        ("parcel_sort", build_parcel_sort_scene),
     ],
 )
 def test_manifest_json_matches_golden(name: str, scene_factory: object) -> None:
