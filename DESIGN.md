@@ -425,3 +425,22 @@ cameras that still see it, and use the occluded views as held-out difficulty.
 extension point: implement the `MeshBackend` ABC to emit a `PoseTrajectory`, and
 the projection/occlusion/manifest path is unchanged. No mesh backend is
 implemented in this layer.
+
+### Skeletal-motion DSL (gaits)
+
+`src/multicam_sim/dsl/gait.py` *generates* pose trajectories so a skeleton does
+not have to be hand-authored per frame. Three parametric gaits — `walk`
+(periodic legs + opposite-phase arms), `reach` (one arm smoothsteps to a
+body-local target), `wave` (raised forearm oscillation) — each produce
+body-local joint offsets as a function of wall-clock time. A **root path** (any
+existing `PathUnion` from the motion DSL) translates the whole skeleton:
+`world joint = root.at_time(t) + local offset`. Limbs are rigid: knees and the
+reaching elbow are placed by closed-form two-link inverse kinematics with
+segment lengths fixed from `height`, so every COCO-17 edge keeps a constant
+length on every frame. Frame compilation is driven
+through the motion DSL's own `compile_frames`, so `over(seconds)` /
+`at_speed` / untimed stretch-to-scene behave exactly as they do for a single
+point, and the gait layer adds no second timing model. Everything is kinematic
+and fully deterministic (no RNG); the output is a plain `PoseTrajectory`, so
+the manifest path above is unchanged.
+
