@@ -22,6 +22,18 @@ Emits two ground-truth sidecars next to this file (``--out`` to change dir):
 
 * ``manifest.json`` — the full scene manifest (projection + in_view/visible);
 * ``order.json``    — the verified order result (fulfilled / missing / …).
+
+Opt-in **placement-synced preset** (``--placement-synced``): the continuous
+wrist reach is replaced by discrete hand dips synced to the placements (a
+strict local minimum of the tracked wrist's height at ``placed_at - δ`` per
+placed item), plus negatives that falsify temporal association: a distractor
+dip that places nothing, and a distractor item (``part_d``) whose uncaused
+move follows that dip inside the causal lag window — a naive causal-forward
+associator pairs them, and the ground truth says otherwise. The true
+``(actor, item, action_frame, change_frame)`` pairs are written to
+``interactions.json`` so a causal-fusion consumer can score precision/recall.
+Off by default: without the flag the scene and every emitted file are
+byte-identical to before.
 """
 
 from __future__ import annotations
@@ -33,6 +45,12 @@ from pathlib import Path
 from typing import Any
 
 from multicam_sim import write_manifest
+from multicam_sim.actions import (
+    CausalTiming,
+    DipSchedule,
+    build_action_ground_truth,
+    write_actions_json,
+)
 from multicam_sim.dsl.rig import CameraRig, StationView
 from multicam_sim.entities import Entity, EntityFrame
 from multicam_sim.order import (
@@ -62,6 +80,24 @@ _ITEM_STAGING = {
 }
 _PLACED_AT = {"part_a": 2, "part_b": 5, "part_c": 8}
 
+# --- placement-synced preset (opt-in via --placement-synced) ---------------- #
+# The causal half of the fusion story: the tracked hand dips (strict local
+# height minimum) at ``placed_at - δ`` for each placed item. The negatives are
+# positioned to *falsify* a naive causal-forward associator ("pair each dip
+# with the next change inside the lag window"): the distractor dip places
+# nothing, but the distractor item's move — which it did not cause — follows
+# inside the window, so the naive rule pairs them and interactions.json says
+# otherwise. δ and the lag window are typed parameters (CausalTiming).
+_TRACKED_HAND = "right_wrist"
+_SYNC_NUM_FRAMES = 13
+_SYNC_TIMING = CausalTiming(action_lag=1, lag_window=2)
+_DIP_DEPTH = 0.30
+_DIP_HALF_WIDTH = 1
+_DISTRACTOR_ITEM = "part_d"
+_DISTRACTOR_STAGING = (2.60, -0.30, 0.90)
+_DISTRACTOR_DIP = 10  # places nothing; >= 2*half_width+1 from the dip at 7
+_DISTRACTOR_PLACED_AT = 11  # uncaused move inside the dip-10 lag window
+
 # Standing COCO-17 offsets (dx, dy, dz) from the foot base; +y is the facing dir.
 _JOINT_OFFSETS: dict[str, tuple[float, float, float]] = {
     "nose": (0.0, 0.10, 1.60),
@@ -84,37 +120,66 @@ _JOINT_OFFSETS: dict[str, tuple[float, float, float]] = {
 }
 
 
-def operator_pose() -> PoseTrajectory:
-    """A standing COCO-17 operator whose wrists make a small assembling motion."""
+def operator_pose(placement_synced: bool = False, num_frames: int = NUM_FRAMES) -> PoseTrajectory:
+    """A standing COCO-17 operator whose wrists make a small assembling motion.
+
+    Default: a single continuous sinusoidal wrist reach (order-verification
+    scene). With ``placement_synced``: the wrists rest and the tracked hand
+    (:data:`_TRACKED_HAND`) dips — a strict local height minimum at
+    ``placed_at - δ`` for each placed item, plus one distractor dip that
+    assembles nothing — so every dip is recoverable off the manifest alone.
+    """
     bx, by = _OPERATOR_BASE
     frames: list[PoseFrame] = []
-    for f in range(NUM_FRAMES):
-        phase = math.sin(2.0 * math.pi * f / (NUM_FRAMES - 1))  # -1..1, smooth
+    for f in range(num_frames):
+        phase = (
+            0.0 if placement_synced else math.sin(2.0 * math.pi * f / (num_frames - 1))
+        )  # -1..1, smooth
         joints: dict[str, list[float]] = {}
         for name, (dx, dy, dz) in _JOINT_OFFSETS.items():
             reach = 0.06 * phase if name.endswith("wrist") else 0.0  # wrists reach in +y
             joints[name] = [bx + dx, by + dy + reach, dz]
         frames.append(PoseFrame(frame=f, joints=joints))
-    return PoseTrajectory(id="operator", skeleton=Skeleton.coco17(), frames=frames)
+    trajectory = PoseTrajectory(id="operator", skeleton=Skeleton.coco17(), frames=frames)
+    if placement_synced:
+        dips = DipSchedule(
+            frames=[*synced_dip_frames(), _DISTRACTOR_DIP],
+            rest_height=_JOINT_OFFSETS[_TRACKED_HAND][2],
+            depth=_DIP_DEPTH,
+            half_width=_DIP_HALF_WIDTH,
+        )
+        trajectory = dips.author(trajectory, _TRACKED_HAND)
+    return trajectory
 
 
-def item_entity(item_id: str) -> Entity:
+def synced_dip_frames() -> list[int]:
+    """The dip frame (``placed_at - δ``) for each causally-backed placement."""
+    return sorted(frame - _SYNC_TIMING.action_lag for frame in _PLACED_AT.values())
+
+
+def item_entity(
+    item_id: str,
+    staging: tuple[float, float, float] | None = None,
+    placed_at: int | None = None,
+    num_frames: int = NUM_FRAMES,
+) -> Entity:
     """An item that sits at its staging spot, then jumps into the container at its
     ``placed_at`` frame (and stays)."""
-    staging = _ITEM_STAGING[item_id]
-    placed_at = _PLACED_AT[item_id]
+    staging = _ITEM_STAGING[item_id] if staging is None else staging
+    placed_at = _PLACED_AT[item_id] if placed_at is None else placed_at
     frames = [
         EntityFrame(
             frame=f,
             points={"center": list(_CONTAINER if f >= placed_at else staging)},
         )
-        for f in range(NUM_FRAMES)
+        for f in range(num_frames)
     ]
     return Entity(id=item_id, frames=frames)
 
 
-def build_scene() -> Scene:
+def build_scene(placement_synced: bool = False) -> Scene:
     """Assemble the two-camera scene: overview (operator) + worktop (items)."""
+    num_frames = _SYNC_NUM_FRAMES if placement_synced else NUM_FRAMES
     cameras = CameraRig.stations(
         [
             # overview: wide-ish, high, to the north (+y), framing the operator.
@@ -125,25 +190,44 @@ def build_scene() -> Scene:
         width=1280,
         height_px=720,
     )
-    entities = [operator_pose().to_entity(), *(item_entity(i) for i in _ITEM_STAGING)]
-    return Scene(fps=FPS, num_frames=NUM_FRAMES, cameras=cameras, entities=entities)
+    entities = [
+        operator_pose(placement_synced, num_frames).to_entity(),
+        *(item_entity(i, num_frames=num_frames) for i in _ITEM_STAGING),
+    ]
+    if placement_synced:
+        entities.append(
+            item_entity(
+                _DISTRACTOR_ITEM,
+                staging=_DISTRACTOR_STAGING,
+                placed_at=_DISTRACTOR_PLACED_AT,
+                num_frames=num_frames,
+            )
+        )
+    return Scene(fps=FPS, num_frames=num_frames, cameras=cameras, entities=entities)
 
 
-def build_order() -> tuple[Order, list[ItemPlacement]]:
+def build_order(placement_synced: bool = False) -> tuple[Order, list[ItemPlacement]]:
     """The pick-list (one of each part) and the placements as items land."""
-    bom = BillOfMaterials.from_counts({item: 1 for item in _ITEM_STAGING})
+    counts = {item: 1 for item in _ITEM_STAGING}
+    placed_at = dict(_PLACED_AT)
+    if placement_synced:
+        counts[_DISTRACTOR_ITEM] = 1
+        placed_at[_DISTRACTOR_ITEM] = _DISTRACTOR_PLACED_AT
+    bom = BillOfMaterials.from_counts(counts)
     order = Order(order_id="ORD-1", bom=bom)
     placements = [
         ItemPlacement(item=item, placed_at_frame=frame, entity_id=item)
-        for item, frame in _PLACED_AT.items()
+        for item, frame in placed_at.items()
     ]
     return order, placements
 
 
-def build_actions(placements: list[ItemPlacement]) -> list[ActionEvent]:
+def build_actions(
+    placements: list[ItemPlacement], trajectory: PoseTrajectory | None = None
+) -> list[ActionEvent]:
     """One 'place' ActionEvent per placement, synced to its frame, carrying the
     operator's right-wrist world position at that frame (causal-fusion GT)."""
-    joints_by_frame = {f.frame: f.joints for f in operator_pose().frames}
+    joints_by_frame = {f.frame: f.joints for f in (trajectory or operator_pose()).frames}
     hand = "right_wrist"
     events: list[ActionEvent] = []
     for p in placements:
@@ -171,17 +255,18 @@ def entity_in_view(manifest: dict[str, Any], entity_id: str, cam_id: int) -> tup
     return seen, len(entity["frames"])
 
 
-def run(out_dir: Path) -> dict[str, Any]:
+def run(out_dir: Path, placement_synced: bool = False) -> dict[str, Any]:
     """Build, verify, write sidecars, and return a summary dict."""
     out_dir.mkdir(parents=True, exist_ok=True)
-    scene = build_scene()
-    order, placements = build_order()
+    scene = build_scene(placement_synced)
+    order, placements = build_order(placement_synced)
 
     write_manifest(scene, out_dir / "manifest.json")
     # read back the on-disk manifest as a plain dict — the genuine consumer path.
     manifest = json.loads((out_dir / "manifest.json").read_text())
 
-    actions = build_actions(placements)
+    trajectory = operator_pose(placement_synced, num_frames=scene.num_frames)
+    actions = build_actions(placements, trajectory=trajectory)
     # order.json = the order GT sidecar: status + per-item deltas + the synced
     # ActionEvents (manifest stays byte-golden — actions never touch it).
     result: OrderResult = verify_order(
@@ -190,8 +275,21 @@ def run(out_dir: Path) -> dict[str, Any]:
     write_order_json(result, out_dir / "order.json")
     write_order_json(order, out_dir / "pick_list.json")
 
+    truth = None
+    if placement_synced:
+        # interactions.json = the causal GT sidecar: only the true pairs. The
+        # dip-10 → part_d pairing a temporal associator will make is absent, so
+        # it scores as a false positive — the authored negative.
+        truth = build_action_ground_truth(
+            _SYNC_TIMING,
+            actor_id="operator",
+            tracked_joint=_TRACKED_HAND,
+            placements=[p for p in placements if p.item != _DISTRACTOR_ITEM],
+        )
+        write_actions_json(truth, out_dir / "interactions.json")
+
     OVERVIEW, WORKTOP = 0, 1
-    item_ids = list(_ITEM_STAGING)
+    item_ids = [*_ITEM_STAGING, *([_DISTRACTOR_ITEM] if placement_synced else [])]
     visibility = {
         "operator": {
             "overview": entity_in_view(manifest, "operator", OVERVIEW),
@@ -209,6 +307,7 @@ def run(out_dir: Path) -> dict[str, Any]:
         "manifest": manifest,
         "result": result,
         "actions": actions,
+        "interactions": truth,
         "visibility": visibility,
         "out_dir": out_dir,
     }
@@ -219,15 +318,22 @@ def main() -> int:
     parser.add_argument(
         "--out", type=Path, default=Path(__file__).parent / "out", help="output directory"
     )
+    parser.add_argument(
+        "--placement-synced",
+        action="store_true",
+        help="placement-synced preset: hand dips at placed_at - δ per item, a "
+        "distractor dip, a late distractor item, and an interactions.json "
+        "causal ground-truth sidecar",
+    )
     args = parser.parse_args()
-    summary = run(args.out)
+    summary = run(args.out, placement_synced=args.placement_synced)
 
     vis = summary["visibility"]
     print(f"[assembly_station] wrote manifest.json + order.json to {summary['out_dir']}")
     print("  camera 0 = overview (operator) | camera 1 = worktop (items)")
     for name, cams in vis.items():
-        ov, wt = cams["overview"][0], cams["worktop"][0]
-        print(f"  {name:9s}  overview in_view {ov:2d}/11   worktop in_view {wt:2d}/11")
+        (ov, n), (wt, _) = cams["overview"], cams["worktop"]
+        print(f"  {name:9s}  overview in_view {ov:2d}/{n}   worktop in_view {wt:2d}/{n}")
     print(f"  order {summary['result'].status.value}")
     for ev in summary["actions"]:
         hx, hy, hz = ev.hand_position
@@ -235,6 +341,14 @@ def main() -> int:
             f"  action {ev.action} {ev.item_id} @frame {ev.frame} "
             f"hand({ev.hand_joint})=({hx:.2f},{hy:.2f},{hz:.2f})"
         )
+    truth = summary["interactions"]
+    if truth is not None:
+        print(f"  interactions.json: {len(truth.pairs)} causal pairs")
+        for pair in truth.pairs:
+            print(
+                f"  {pair.actor_id} dip @frame {pair.action_frame} "
+                f"-> {pair.item_id} placed @frame {pair.change_frame}"
+            )
     return 0
 
 

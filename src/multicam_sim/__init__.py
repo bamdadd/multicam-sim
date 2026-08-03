@@ -6,6 +6,14 @@ Camera convention mirrored from multicam-occlusion@59f4906 (see
 
 from __future__ import annotations
 
+from .actions import (
+    ActionChange,
+    ActionGroundTruth,
+    CausalTiming,
+    DipSchedule,
+    build_action_ground_truth,
+    write_actions_json,
+)
 from .activity import ActivitySegment, ActivityState, ActivityTimeline, write_activity_json
 from .annotations import (
     CocoAnnotation,
@@ -77,6 +85,8 @@ from .visibility import silhouette_visible_fraction
 __all__ = [
     "COCO17_EDGES",
     "COCO17_JOINTS",
+    "ActionChange",
+    "ActionGroundTruth",
     "ActivitySegment",
     "ActivityState",
     "ActivityTimeline",
@@ -85,6 +95,7 @@ __all__ = [
     "BackgroundSpec",
     "Box",
     "CalibrationDrift",
+    "CausalTiming",
     "Cylinder",
     "Camera",
     "CameraManifest",
@@ -93,6 +104,7 @@ __all__ = [
     "CocoCategory",
     "CocoDataset",
     "CocoImage",
+    "DipSchedule",
     "DistractorSpec",
     "Entity",
     "EntityFrame",
@@ -129,6 +141,7 @@ __all__ = [
     "TransitEdge",
     "YoloDataset",
     "YoloLabel",
+    "build_action_ground_truth",
     "build_group_formation_scene",
     "build_manifest",
     "build_mtmc_scene",
@@ -141,6 +154,7 @@ __all__ = [
     "export_overlay",
     "export_yolo",
     "validate_manifest",
+    "write_actions_json",
     "write_activity_json",
     "write_coco",
     "write_group_json",
