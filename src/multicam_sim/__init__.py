@@ -52,6 +52,7 @@ from .mtmc import build_mtmc_scene
 from .noise import CalibrationDrift, NoiseModel, PixelNoise
 from .occluders import Box, Cylinder, HandKeyframe, HandOccluder, Occluder, PathOccluder, Sphere
 from .overlay import export_overlay
+from .parcel_sort import build_parcel_sort_scene
 from .pose import (
     COCO17_EDGES,
     COCO17_JOINTS,
@@ -143,6 +144,7 @@ __all__ = [
     "YoloLabel",
     "build_action_ground_truth",
     "build_group_formation_scene",
+    "build_parcel_sort_scene",
     "build_manifest",
     "build_mtmc_scene",
     "silhouette_visible_fraction",
