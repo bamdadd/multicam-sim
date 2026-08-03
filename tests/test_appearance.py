@@ -137,6 +137,71 @@ def test_roundtrip_json() -> None:
     assert restored == table
 
 
+def test_observe_sigma_zero_is_exact_anchor() -> None:
+    """sigma == 0 is a bitwise no-op: observe() returns the stored anchor verbatim."""
+    table = AppearanceTable.sample(_ENTITY_IDS, dim=256, separation=0.8, seed=7)
+    for entry in table.entries:
+        obs = table.observe(entry.entity_id, obs_seed=99, sigma=0.0)
+        # Pinned to the ACTUAL stored anchor, not a recomputed sample().
+        assert obs == entry.descriptor
+
+
+def test_observe_deterministic_and_seed_sensitive() -> None:
+    """Same (entity_id, obs_seed, sigma) -> identical vector; different obs_seed ->
+    a different but still valid unit observation of the same anchor."""
+    table = AppearanceTable.sample(_ENTITY_IDS, dim=256, separation=0.8, seed=7)
+    a = table.observe("entity_a", obs_seed=3, sigma=0.5)
+    b = table.observe("entity_a", obs_seed=3, sigma=0.5)
+    assert a == b
+
+    c = table.observe("entity_a", obs_seed=4, sigma=0.5)
+    assert c != a
+    assert _is_unit(c)
+    assert all(math.isfinite(x) for x in c)
+
+
+def test_observe_unit_norm_finite_and_dim() -> None:
+    """Every noisy observation is unit-norm, finite, and exactly `dim` long."""
+    for dim in (32, 256):
+        table = AppearanceTable.sample(_ENTITY_IDS, dim=dim, separation=0.7, seed=5)
+        for sigma in (0.0, 0.25, 1.0, 2.0):
+            for entry in table.entries:
+                obs = table.observe(entry.entity_id, obs_seed=11, sigma=sigma)
+                assert len(obs) == dim
+                assert _is_unit(obs)
+                assert all(math.isfinite(x) for x in obs)
+
+
+def test_observe_noise_monotonic_drift_from_anchor() -> None:
+    """Mean cosine(observation, anchor) DECREASES as sigma increases: more noise
+    means observations drift further from the anchor. Averaged over >=3 seeds and
+    >=3 sigma values so the assertion clears sampling jitter."""
+    sigmas = [0.25, 0.5, 1.0, 2.0]
+    seeds = [0, 1, 2, 3, 4]
+    table = AppearanceTable.sample(_ENTITY_IDS, dim=512, separation=0.8, seed=7)
+    anchors = {e.entity_id: np.asarray(e.descriptor) for e in table.entries}
+
+    mean_cos = []
+    for sigma in sigmas:
+        cosines = [
+            float(np.asarray(table.observe(eid, obs_seed=s, sigma=sigma)) @ anchors[eid])
+            for eid in anchors
+            for s in seeds
+        ]
+        mean_cos.append(sum(cosines) / len(cosines))
+
+    for lower_sigma, higher_sigma in zip(mean_cos, mean_cos[1:], strict=False):
+        assert higher_sigma < lower_sigma, f"non-monotone drift: {mean_cos}"
+
+
+def test_observe_rejects_negative_sigma_and_unknown_id() -> None:
+    table = AppearanceTable.sample(_ENTITY_IDS, dim=32, separation=0.8, seed=7)
+    with pytest.raises(ValueError):
+        table.observe("entity_a", obs_seed=0, sigma=-0.1)
+    with pytest.raises(ValueError):
+        table.observe("nope", obs_seed=0, sigma=0.5)
+
+
 def _scene_with_appearance(*, attach: bool) -> Scene:
     scene = build_smoke_scene()
     if not attach:
