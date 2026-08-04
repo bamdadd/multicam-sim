@@ -29,6 +29,13 @@ from .annotations import (
 )
 from .appearance import AppearanceTable, EntityAppearance, write_appearance_json
 from .cameras import Camera, Intrinsics
+from .coverage import (
+    CameraCoverage,
+    CoverageReport,
+    FrameRef,
+    HandoffPoint,
+    compute_coverage_metrics,
+)
 from .dropout import SensorDropout
 from .entities import Entity, EntityFrame
 from .groups import (
@@ -99,7 +106,9 @@ __all__ = [
     "BackgroundSpec",
     "Box",
     "CalibrationDrift",
+    "CameraCoverage",
     "CausalTiming",
+    "CoverageReport",
     "Cylinder",
     "Camera",
     "CameraManifest",
@@ -115,10 +124,12 @@ __all__ = [
     "EntityFrame",
     "EntityManifest",
     "FrameObs",
+    "FrameRef",
     "GroupFrameMembership",
     "GroupMembership",
     "HandKeyframe",
     "HandOccluder",
+    "HandoffPoint",
     "InteractionEvent",
     "Intrinsics",
     "Light",
@@ -157,6 +168,7 @@ __all__ = [
     "build_pose_smoke_scene",
     "build_smoke_scene",
     "compute_group_membership",
+    "compute_coverage_metrics",
     "export_coco",
     "export_overlay",
     "export_yolo",
