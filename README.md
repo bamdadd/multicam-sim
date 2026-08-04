@@ -33,6 +33,27 @@ occlusion, and it is exactly the non-overlapping-coverage problem this sim
 exists to benchmark. Reproduce: `uv run --with 'imageio[ffmpeg]' python
 scripts/record_multiview.py`.*
 
+## Coverage and handoff reports
+
+Any saved manifest can be reduced to one entity-frame sample at a time and
+reported as JSON. Add `--panel` to render the same ground-truth metrics as a
+headless PNG; matplotlib remains a lazy script-only dependency.
+
+```bash
+uv run python scripts/coverage_metrics.py scene.json
+uv run --with matplotlib python scripts/coverage_metrics.py scene.json \
+  --panel docs/assets/coverage_metrics.png
+```
+
+The panel combines per-camera coverage bars with overlap, handoff and blind-gap
+totals. Its timeline makes the difference between one-camera coverage, overlapping
+coverage and a true blind frame visible without using rendered pixels or an
+external tracker.
+
+![Coverage panel for the handoff_ltr scene: per-camera fractions, overlap and handoff totals, and a frame-by-frame coverage timeline.](docs/assets/handoff_ltr_coverage_metrics.png)
+
+![Coverage panel for the assembly-line scene: complementary overview and worktop camera coverage across the operator and parts.](docs/assets/assembly_line_coverage_metrics.png)
+
 **Can you recover a 3D point, or a human joint, when it is hidden in some camera
 views but still seen in others?** multicam-sim builds the synthetic multi-camera
 scenes you need to ask that question with ground truth in hand.
